@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+.coddle
+*~
+*.blend1
+terraform
