@@ -1,7 +1,9 @@
 #include "bot.hpp"
 #include "stone.hpp"
+#include "terrain.hpp"
 #include "world.hpp"
 #include <coeff/coefficient_registry.hpp>
+#include <log/log.hpp>
 #include <sdlpp/sdlpp.hpp>
 #include <shade/library.hpp>
 #include <shade/shader_program.hpp>
@@ -15,6 +17,11 @@
 
 COEFF(CamMoveSpeed, 0.002f);
 COEFF(CamZoomSpeed, 0.1f);
+COEFF(MapXK, 0.1f);
+COEFF(MapYK, 0.1f);
+COEFF(MapYBalance, 50);
+COEFF(MaxCamZ, 250.0f);
+COEFF(MinCamZ, 20.0f);
 
 int main()
 {
@@ -41,13 +48,14 @@ int main()
   auto camZ = 20.0f;
   Library lib(rend.get());
   World world(lib);
-  std::vector<std::unique_ptr<Entity>> entities;
   for (auto x = -10.0f; x <= 10.0f; x += 4.0f)
     for (auto y = -10.0f; y <= 10.0f; y += 4.0f)
-      entities.push_back(std::make_unique<Bot>(world, x, y));
-  for (auto i = 0; i < 1000; ++i)
-    entities.push_back(
-      std::make_unique<Stone>(world, rand() % 1000 / 10.0f - 50.0f, rand() % 1000 / 10.0f - 50.0f));
+      world.add(std::make_unique<Bot>(world, x, y));
+  for (auto i = 0; i < 300000; ++i)
+    world.add(
+      std::make_unique<Stone>(world,
+                              rand() % (Terrain::Width * 10) / 10.0f - Terrain::Width / 2,
+                              rand() % (Terrain::Height * 10) / 10.0f - Terrain::Height / 2));
   auto done = false;
   sdl::EventHandler evHand;
   evHand.quit = [&done](const SDL_QuitEvent &) { done = true; };
@@ -59,6 +67,8 @@ int main()
   };
   evHand.mouseWheel = [&camZ](const SDL_MouseWheelEvent &e) {
     camZ = camZ * exp(e.y * CamZoomSpeed);
+    camZ = std::max(MinCamZ, std::min(camZ, MaxCamZ));
+    LOG("camZ", camZ);
   };
   evHand.keyDown = [](const SDL_KeyboardEvent &keyEv) {
     if (CoefficientRegistry::instance().onKeyDown(keyEv.keysym.sym))
@@ -67,6 +77,9 @@ int main()
       return;
     }
   };
+
+  int frames = 0;
+  auto nextMeasure = SDL_GetTicks() + 1000U;
 
   while (!done)
   {
@@ -80,11 +93,19 @@ int main()
     view.update();
     proj.update();
     view.update();
-    for (auto &&e : entities)
-    {
-      e->draw(mvp);
-      e->tick(); // TODO remove
-    }
+
+    world.draw(mvp,
+               camX - camZ * MapXK,
+               camX + camZ * MapXK,
+               camY - camZ * MapYK * MapYBalance / 100,
+               camY + camZ * MapYK);
     rend.present();
+    ++frames;
+    if (SDL_GetTicks() > nextMeasure)
+    {
+      LOG("fps", frames);
+      frames = 0;
+      nextMeasure += 1000;
+    }
   }
 }
