@@ -12,6 +12,14 @@ namespace sdl
   class Texture;
 }
 
+struct TerrainChunk
+{
+  static const int ChunkSize = 50;
+  std::unique_ptr<ArrayBuffer> vertices;
+  std::unique_ptr<ArrayBuffer> uvs;
+  std::unique_ptr<ArrayBuffer> normals;
+};
+
 class Terrain
 {
 public:
@@ -24,17 +32,11 @@ public:
   void draw(Var<glm::mat4> &mvp, int minX, int maxX, int minY, int maxY);
 
 private:
-  mutable std::unordered_map<uint32_t, float> z;
   FastNoise noise;
   sdl::Texture *terrainTex;
-  std::vector<glm::vec3> tmpVertices;
-  std::vector<glm::vec2> tmpUvs;
-  std::vector<glm::vec3> tmpNormals;
-  std::unique_ptr<ArrayBuffer> vertices;
-  std::unique_ptr<ArrayBuffer> uvs;
-  std::unique_ptr<ArrayBuffer> normals;
-  int lastMinX = 0;
-  int lastMaxX = 0;
-  int lastMinY = 0;
-  int lastMaxY = 0;
+  mutable std::vector<glm::vec3> tmpVertices;
+  mutable std::vector<glm::vec2> tmpUvs;
+  mutable std::vector<glm::vec3> tmpNormals;
+  std::unordered_map<int, TerrainChunk> cache;
+  TerrainChunk generateChunk(int x, int y) const;
 };

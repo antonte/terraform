@@ -11,3 +11,14 @@ float Entity::getY() const
 {
   return y;
 }
+
+void Entity::setXY(float aX, float aY)
+{
+  x = aX;
+  y = aY;
+}
+
+bool Entity::isActive() const
+{
+  return false;
+}

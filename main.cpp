@@ -48,14 +48,15 @@ int main()
   auto camZ = 20.0f;
   Library lib(rend.get());
   World world(lib);
-  for (auto x = -10.0f; x <= 10.0f; x += 4.0f)
-    for (auto y = -10.0f; y <= 10.0f; y += 4.0f)
+  for (int x = -10; x < 10; x += 3)
+    for (int y = -10; y < 10; y += 3)
       world.add(std::make_unique<Bot>(world, x, y));
   for (auto i = 0; i < 300000; ++i)
     world.add(
       std::make_unique<Stone>(world,
                               rand() % (Terrain::Width * 10) / 10.0f - Terrain::Width / 2,
                               rand() % (Terrain::Height * 10) / 10.0f - Terrain::Height / 2));
+  //  world.add(std::make_unique<Stone>(world, 3.0f, 3.0f));
   auto done = false;
   sdl::EventHandler evHand;
   evHand.quit = [&done](const SDL_QuitEvent &) { done = true; };
@@ -80,6 +81,8 @@ int main()
 
   int frames = 0;
   auto nextMeasure = SDL_GetTicks() + 1000U;
+
+  auto tickTime = SDL_GetTicks();
 
   while (!done)
   {
@@ -106,6 +109,11 @@ int main()
       LOG("fps", frames);
       frames = 0;
       nextMeasure += 1000;
+    }
+    while (SDL_GetTicks() > tickTime)
+    {
+      world.tick();
+      tickTime += 10;
     }
   }
 }

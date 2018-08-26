@@ -11,8 +11,10 @@ public:
   virtual ~Entity() = default;
   float getX() const;
   float getY() const;
+  void setXY(float x, float y);
   virtual void draw(Var<glm::mat4> &mvp) = 0;
   virtual void tick() = 0;
+  virtual bool isActive() const;
 
 protected:
   World *world;
