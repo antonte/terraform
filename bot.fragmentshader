@@ -1,0 +1,25 @@
+out vec4 color;
+in vec2 uv;
+in vec3 vNormal;
+in float vEnergy;
+uniform sampler2D tex;
+
+void main(){
+  float fDotProduct = max(0.0, dot(vNormal, vec3(.577, -.577, .577))) * 0.6;
+  vec3 energyColor = vec3(1.0, 1.0, 1.0);
+  if (vEnergy < 0.25)
+    energyColor = vec3(0.50 + vEnergy * 2.0, 0.0, 0.0);
+  else if (vEnergy < 0.5)
+    energyColor = vec3(1.0, (vEnergy - 0.25) * 4.0, 0.0);
+  else if (vEnergy < 0.75)
+    energyColor = vec3(1.0 - (vEnergy - 0.5) * 4.0, 1.0, 0);
+  else
+  {
+    float r = (vEnergy - 0.75) * 4.0;
+    energyColor = vec3(r, 1.0, r);
+  }
+
+  vec3 rgb = texture(tex, uv).rgb * energyColor;
+  float a = texture(tex, uv).a;
+  color = vec4(rgb * fDotProduct + rgb * 0.4, a);
+}

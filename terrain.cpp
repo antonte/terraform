@@ -1,9 +1,11 @@
 #include "terrain.hpp"
 
+#include "world.hpp"
 #include <log/log.hpp>
 #include <sdlpp/sdlpp.hpp>
 #include <shade/array_buffer.hpp>
 #include <shade/library.hpp>
+#include <shade/shader_program.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/normal.hpp>
@@ -18,7 +20,7 @@ Terrain::Terrain(Library &lib) : terrainTex(lib.getTexture("terrain"))
 Terrain::~Terrain()
 {}
 
-float Terrain::getZ(int x, int y) const
+float Terrain::getZ(float x, float y) const
 {
   return 20.0f * noise.GetNoise(x, y);
 }
@@ -30,11 +32,12 @@ static int getChunkIdx(int x, int y)
            (Terrain::Width / TerrainChunk::ChunkSize);
 }
 
-void Terrain::draw(Var<glm::mat4> &mvp, int minX, int maxX, int minY, int maxY)
+void Terrain::draw(World &world, int minX, int maxX, int minY, int maxY)
 {
-  mvp = glm::translate(glm::vec3(0.0f, 0.0, 0.0f)) *
-        glm::rotate(-3.1415926f / 2, glm::vec3(1.0f, 0.0f, 0.0f));
-  mvp.update();
+  world.shad->use();
+  world.mvp = glm::translate(glm::vec3(0.0f, 0.0, 0.0f)) *
+               glm::rotate(-3.1415926f / 2, glm::vec3(1.0f, 0.0f, 0.0f));
+  world.mvp.update();
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   terrainTex->glBind(nullptr, nullptr);

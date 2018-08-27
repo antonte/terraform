@@ -7,6 +7,7 @@
 
 class Library;
 class ArrayBuffer;
+class World;
 namespace sdl
 {
   class Texture;
@@ -28,8 +29,8 @@ public:
 
   Terrain(Library &);
   ~Terrain();
-  float getZ(int x, int y) const;
-  void draw(Var<glm::mat4> &mvp, int minX, int maxX, int minY, int maxY);
+  float getZ(float x, float y) const;
+  void draw(World&, int minX, int maxX, int minY, int maxY);
 
 private:
   FastNoise noise;

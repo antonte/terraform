@@ -5,13 +5,20 @@
 class Bot : public Entity
 {
 public:
-  Bot(World &, float x, float y, const Ram& ram = Program::Default.data());
-  void draw(Var<glm::mat4> &mvp) override;
+  Bot(World &,
+      float x,
+      float y,
+      uint16_t maxEnergy,
+      uint16_t maxMatter,
+      const Ram &ram = Program::Default.data());
+  void draw() override;
   void tick() override;
   bool isActive() const override;
 private:
   static const int TakeEnergy = 10;
   static const int BuildEnergy = 1000;
+  static const int BuildMatter = 100;
+  static const int StoneMatter = 10;
   enum class Addr {
     Move = 0xfff6,       // writing to this address makes bot to do something:
                          // 0 - stop
@@ -35,6 +42,8 @@ private:
 
   uint16_t energy = 250;
   uint16_t matter = 0;
+  uint16_t maxEnergy;
+  uint16_t maxMatter;
   std::array<uint16_t, 32> reg; // reg[0] - ip
   Ram ram;
   uint16_t getRam(uint16_t addr);

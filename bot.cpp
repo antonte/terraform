@@ -7,21 +7,31 @@
 #include <coeff/coefficient_registry.hpp>
 #include <log/log.hpp>
 #include <shade/obj.hpp>
+#include <shade/shader_program.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
-Bot::Bot(World &world, float x, float y, const Ram &aRam) : Entity(world, x, y), ram(aRam)
+Bot::Bot(World &world, float x, float y, uint16_t aMaxEnergy, uint16_t aMaxMatter, const Ram &aRam)
+  : Entity(world, x, y), maxEnergy(aMaxEnergy), maxMatter(aMaxMatter), ram(aRam)
 {
   for (auto &r: reg)
     r = 0;
 }
 
-void Bot::draw(Var<glm::mat4> &mvp)
+void Bot::draw()
 {
-  mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y))) *
+  world->botShad->use();
+  world->mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y))) *
         glm::rotate(direction, glm::vec3(0.0f, 0.0f, 1.0f));
-  mvp.update();
+  world->mvp.update();
+  world->botClass->energy = 1.0 * energy / maxEnergy;
+  if (energy < 2)
+  {
+    auto &&anim = world->botClass->idleAnim;
+    anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
+    return;
+  }
   switch (move)
   {
   case Move::Stop:
@@ -103,27 +113,35 @@ void Bot::tick()
 
   switch (move)
   {
-  case Move::Stop: break;
-  case Move::Frwd:
-    if (energy < 1)
+  case Move::Stop:
+    if (energy + 1 >= maxEnergy)
       break;
+    energy++;
+    break;
+  case Move::Frwd:
+    if (energy < 2)
+      break;
+    energy -= 2;
     world->move(*this, x + BotSpeed * cos(direction), y + BotSpeed * sin(direction));
     break;
   case Move::Right:
-    if (energy < 1)
+    if (energy < 2)
       break;
+    energy -= 2;
     direction -= BotRotationSpeed;
     if (direction < -3.1415926f)
       direction += 2 * 3.1415926f;
     break;
   case Move::Bckwd:
-    if (energy < 1)
+    if (energy < 2)
       break;
+    energy -= 2;
     world->move(*this, x - BotSpeed * cos(direction), y - BotSpeed * sin(direction));
     break;
   case Move::Left:
-    if (energy < 1)
+    if (energy < 2)
       break;
+    energy -= 2;
     direction += BotRotationSpeed;
     if (direction > 3.1415926f)
       direction -= 2 * 3.1415926f;
@@ -132,6 +150,8 @@ void Bot::tick()
   {
     move = Move::Stop;
     if (energy < TakeEnergy)
+      break;
+    if (matter + StoneMatter > maxMatter)
       break;
     Entity *clEnt = nullptr;
     float minDist;
@@ -153,12 +173,20 @@ void Bot::tick()
       break;
     if (minDist >= 0.5f)
       break;
+    energy -= TakeEnergy;
+    matter += StoneMatter;
     world->remove(*clEnt);
     break;
   }
   case Move::BuildBot:
+    move = Move::Stop;
     if (energy < BuildEnergy)
       break;
+    if (matter < BuildMatter)
+      break;
+    energy -= BuildEnergy;
+    world->add(std::make_unique<Bot>(
+      *world, x + cos(direction), y + sin(direction), maxEnergy, maxMatter, ram));
     break;
   case Move::BuildO2:
     if (energy < BuildEnergy)
@@ -178,6 +206,7 @@ void Bot::tick()
   }
 
   auto opCode = getRam(reg[0]++); // reg[0] is IP (Instruction Pointer) register
+  // LOG(reg[0], opCodeToString(opCode), energy, reg[1], reg[7]);
   auto isLeftIndirect = (opCode & 0x0200) != 0;
   auto &leftReg = reg[(opCode >> 4) & 0x1f];
   auto value = reg[(opCode >> 10) & 0x1f];

@@ -12,14 +12,8 @@
 #define GL_GLEXT_PROTOTYPES 1
 #include <SDL_opengl.h>
 
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/transform.hpp>
-
 COEFF(CamMoveSpeed, 0.002f);
 COEFF(CamZoomSpeed, 0.1f);
-COEFF(MapXK, 0.1f);
-COEFF(MapYK, 0.1f);
-COEFF(MapYBalance, 50);
 COEFF(MaxCamZ, 250.0f);
 COEFF(MinCamZ, 20.0f);
 
@@ -27,9 +21,7 @@ int main()
 {
   CoefficientRegistry::instance().load();
   sdl::Init init(SDL_INIT_EVERYTHING);
-  const auto Width = 720 * 720 / 1280;
-  const auto Height = 720;
-  sdl::Window win("Terraform", 64, 100, Width, Height, SDL_WINDOW_OPENGL);
+  sdl::Window win("Terraform", 64, 100, World::Width, World::Height, SDL_WINDOW_OPENGL);
   sdl::Renderer rend(win.get(), -1, 0);
   // set up OpenGL flags
   glEnable(GL_DEPTH_TEST);
@@ -37,12 +29,6 @@ int main()
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  Var<glm::mat4> proj("proj");
-  Var<glm::mat4> view("view");
-  Var<glm::mat4> mvp("mvp");
-  ShaderProgram shad("shad", "shad", mvp, proj, view);
-  shad.use();
-  proj = glm::perspective(glm::radians(45.0f), 1.0f * Width / Height, 0.1f, 1000.0f);
   auto camX = 0.0f;
   auto camY = 0.0f;
   auto camZ = 20.0f;
@@ -50,7 +36,7 @@ int main()
   World world(lib);
   for (int x = -10; x < 10; x += 3)
     for (int y = -10; y < 10; y += 3)
-      world.add(std::make_unique<Bot>(world, x, y));
+      world.add(std::make_unique<Bot>(world, x, y, 2000, 200));
   for (auto i = 0; i < 300000; ++i)
     world.add(
       std::make_unique<Stone>(world,
@@ -81,7 +67,6 @@ int main()
 
   int frames = 0;
   auto nextMeasure = SDL_GetTicks() + 1000U;
-
   auto tickTime = SDL_GetTicks();
 
   while (!done)
@@ -89,19 +74,7 @@ int main()
     while (evHand.poll()) {}
     glClearColor(0.2f, 0.5f, 0.8f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    shad.use();
-    view = glm::lookAt(glm::vec3(camX, camY - camZ, camZ),
-                       glm::vec3(camX, camY, 0.0f), // and looks at the origin
-                       glm::vec3(0, 0, 1));
-    view.update();
-    proj.update();
-    view.update();
-
-    world.draw(mvp,
-               camX - camZ * MapXK,
-               camX + camZ * MapXK,
-               camY - camZ * MapYK * MapYBalance / 100,
-               camY + camZ * MapYK);
+    world.draw(camX, camY, camZ);
     rend.present();
     ++frames;
     if (SDL_GetTicks() > nextMeasure)

@@ -5,11 +5,26 @@
 #include "stone_class.hpp"
 #include "terrain.hpp"
 #include <coeff/coefficient_registry.hpp>
+#include <shade/shader_program.hpp>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/transform.hpp>
 
 World::World(Library &lib)
   : botClass(std::make_unique<BotClass>(lib)),
     stoneClass(std::make_unique<StoneClass>(lib)),
-    terrain(std::make_unique<Terrain>(lib))
+    terrain(std::make_unique<Terrain>(lib)),
+    mvp("mvp"),
+    proj("proj", glm::perspective(glm::radians(45.0f), 1.0f * Width / Height, 0.1f, 1000.0f)),
+    view("view"),
+    shad(std::make_unique<ShaderProgram>("shad", "shad", mvp, proj, view)),
+    botShad(std::make_unique<ShaderProgram>("bot",
+                                            "bot",
+                                            mvp,
+                                            proj,
+                                            view,
+                                            botClass->energy,
+                                            botClass->matter))
 {
 }
 
@@ -20,9 +35,21 @@ static int getGridIdx(int  x, int y)
   return (x + Terrain::Width / 2) / 10 + ((y + Terrain::Height / 2) / 10) * (Terrain::Width / 10);
 }
 
-void World::draw(Var<glm::mat4> &mvp, int minX, int maxX, int minY, int maxY)
+COEFF(MapXK, 0.1f);
+COEFF(MapYK, 0.1f);
+COEFF(MapYBalance, 50);
+
+void World::draw(float camX, float camY, float camZ)
 {
-  terrain->draw(mvp, minX, maxX, minY, maxY);
+  int minX = camX - camZ * MapXK;
+  int maxX = camX + camZ * MapXK;
+  int minY = camY - camZ * MapYK * MapYBalance / 100;
+  int maxY = camY + camZ * MapYK;
+
+  view = glm::lookAt(glm::vec3(camX, camY - camZ, camZ),
+                     glm::vec3(camX, camY, 0.0f), // and looks at the origin
+                     glm::vec3(0, 0, 1));
+  terrain->draw(*this, minX, maxX, minY, maxY);
   for (auto y = minY - 10; y < maxY + 10; y += 10)
     for (auto x = minX - 10; x < maxX + 10; x += 10)
     {
@@ -30,7 +57,7 @@ void World::draw(Var<glm::mat4> &mvp, int minX, int maxX, int minY, int maxY)
       if (it == std::end(grid))
         continue;
       for (auto &&ent : it->second)
-        ent->draw(mvp);
+        ent->draw();
     }
 }
 
