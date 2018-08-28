@@ -31,20 +31,20 @@ struct OpCode
 
 struct RegPtr;
 
-#define OPS                                     \
-  X(=, Mov)                                     \
-  X(+=, Add)                                    \
-  X(-=, Sub)                                    \
-  X(*=, Mul)                                    \
-  X(/=, Div)                                    \
-  X(&=, And)                                    \
-  X(|=, Or)                                     \
-  X(^=, Xor)                                    \
-  X(<<=, ShiftLeft)                             \
-  X(>>=, ShiftRight)                            \
-  X(==, Jeq)                                    \
-  X(!=, Jne)                                    \
-  X(>, Jgt)                                     \
+#define OPS          \
+  X(=, Mov)          \
+  X(+=, Add)         \
+  X(-=, Sub)         \
+  X(*=, Mul)         \
+  X(/=, Div)         \
+  X(&=, And)         \
+  X(|=, Or)          \
+  X(^=, Xor)         \
+  X(<<=, ShiftLeft)  \
+  X(>>=, ShiftRight) \
+  X(==, Jeq)         \
+  X(!=, Jne)         \
+  X(>, Jgt)          \
   X(<, Jlt)
 
 struct Reg
@@ -126,3 +126,5 @@ public:
 private:
   Ram ram;
 };
+
+#define LOAD(reg, x) reg |= (x >> 10), reg |= ((x >> 6) & 0x3f), reg |= (x & 0x3f)

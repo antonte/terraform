@@ -16,7 +16,6 @@ public:
   bool isActive() const override;
 private:
   static const int TakeEnergy = 10;
-  static const int BuildEnergy = 1000;
   static const int BuildMatter = 100;
   static const int StoneMatter = 10;
   enum class Addr {
@@ -30,7 +29,7 @@ private:
                          // 6 - build another bot
                          // 7 - build O2 generator
                          // 8 - build water generator
-                         // 3 - plant the tree
+                         // 9 - plant the tree
     StoneScan = 0xfff9,  // reading this address will return recommended command to reach the
                          // closest stone
     O2Level = 0xfffa,    // level of O2 on the planet

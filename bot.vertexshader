@@ -4,6 +4,7 @@ layout(location = 2) in vec3 vertexNormal;
 out vec2 uv;
 out vec3 vNormal;
 out float vEnergy;
+out float vMatter;
 
 mat4 rotate(float angle, vec3 axis)
 {
@@ -25,4 +26,5 @@ void main()
   uv = vertexUV;
   vNormal = (proj * view * mvp * rotate(3.1415926, vec3(1, 0, 0)) * vec4(vertexNormal, 0.0)).xyz;
   vEnergy = energy;
+  vMatter = matter;
 }
