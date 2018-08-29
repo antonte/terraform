@@ -33,10 +33,8 @@ int main()
   auto camY = 0.0f;
   auto camZ = 20.0f;
   Library lib(rend.get());
+
   World world(lib);
-  // for (int x = -10; x < 10; x += 3)
-  //   for (int y = -10; y < 10; y += 3)
-  //     world.add(std::make_unique<Bot>(world, x, y, 2000, 200));
   world.add(std::make_unique<Bot>(world, 0, 0, 2000, 200));
   for (auto i = 0; i < 100000; ++i)
     world.add(

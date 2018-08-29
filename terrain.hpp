@@ -30,7 +30,11 @@ public:
   Terrain(Library &);
   ~Terrain();
   float getZ(float x, float y) const;
-  void draw(World&, int minX, int maxX, int minY, int maxY);
+  void draw(World &,
+            int minX,
+            int maxX,
+            int minY,
+            int maxY);
 
 private:
   FastNoise noise;

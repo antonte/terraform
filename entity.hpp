@@ -13,8 +13,6 @@ public:
   float getY() const;
   void setXY(float x, float y);
   virtual void draw() = 0;
-  virtual void tick() = 0;
-  virtual bool isActive() const;
 
 protected:
   World *world;

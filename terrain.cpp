@@ -6,11 +6,15 @@
 #include <shade/array_buffer.hpp>
 #include <shade/library.hpp>
 #include <shade/shader_program.hpp>
+#include <coeff/coefficient_registry.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/normal.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/vec_swizzle.hpp>
+
+COEFF(O2Level, 0.01f);
+COEFF(H2OLevel, 0.01f);
 
 Terrain::Terrain(Library &lib) : terrainTex(lib.getTexture("terrain"))
 {
@@ -32,15 +36,21 @@ static int getChunkIdx(int x, int y)
            (Terrain::Width / TerrainChunk::ChunkSize);
 }
 
-void Terrain::draw(World &world, int minX, int maxX, int minY, int maxY)
+void Terrain::draw(World &world,
+                   int minX,
+                   int maxX,
+                   int minY,
+                   int maxY)
 {
-  world.shad->use();
+  world.o2Level = O2Level;
+  world.h2OLevel = H2OLevel;
+  world.terrainShad->use();
   world.mvp = glm::translate(glm::vec3(0.0f, 0.0, 0.0f)) *
                glm::rotate(-3.1415926f / 2, glm::vec3(1.0f, 0.0f, 0.0f));
   world.mvp.update();
+  terrainTex->glBind(nullptr, nullptr);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  terrainTex->glBind(nullptr, nullptr);
 
   const auto Sz = TerrainChunk::ChunkSize;
   for (int y = minY - Sz; y < maxY + Sz; y += Sz)

@@ -463,8 +463,3 @@ void Bot::setRam(uint16_t addr, uint16_t value)
   default: break;
   }
 }
-
-bool Bot::isActive() const
-{
-  return true;
-}

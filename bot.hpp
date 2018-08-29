@@ -1,8 +1,9 @@
 #pragma once
 #include "entity.hpp"
+#include "active_entity.hpp"
 #include "asm.hpp"
 
-class Bot : public Entity
+class Bot : public Entity, public ActiveEntity
 {
 public:
   Bot(World &,
@@ -13,7 +14,6 @@ public:
       const Ram &ram = Program::Default.data());
   void draw() override;
   void tick() override;
-  bool isActive() const override;
 private:
   static const int TakeEnergy = 10;
   static const int BuildMatter = 100;

@@ -1,10 +1,12 @@
 #include "world.hpp"
 
+#include "active_entity.hpp"
 #include "bot_class.hpp"
 #include "entity.hpp"
 #include "stone_class.hpp"
 #include "terrain.hpp"
 #include <coeff/coefficient_registry.hpp>
+#include <shade/obj.hpp>
 #include <shade/shader_program.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -15,6 +17,11 @@ World::World(Library &lib)
     stoneClass(std::make_unique<StoneClass>(lib)),
     terrain(std::make_unique<Terrain>(lib)),
     mvp("mvp"),
+    o2Level("o2Level"),
+    h2OLevel("h2OLevel"),
+    o2PlantObj(std::make_unique<Obj>(lib, "o2_plant")),
+    h2OPlantObj(std::make_unique<Obj>(lib, "h2o_plant")),
+    treeObj(std::make_unique<Obj>(lib, "tree")),
     proj("proj", glm::perspective(glm::radians(45.0f), 1.0f * Width / Height, 0.1f, 1000.0f)),
     view("view"),
     shad(std::make_unique<ShaderProgram>("shad", "shad", mvp, proj, view)),
@@ -24,13 +31,15 @@ World::World(Library &lib)
                                             proj,
                                             view,
                                             botClass->energy,
-                                            botClass->matter))
+                                            botClass->matter)),
+    terrainShad(
+      std::make_unique<ShaderProgram>("terrain", "terrain", mvp, proj, view, o2Level, h2OLevel))
 {
 }
 
 World::~World() {}
 
-static int getGridIdx(int  x, int y)
+static int getGridIdx(int x, int y)
 {
   return (x + Terrain::Width / 2) / 10 + ((y + Terrain::Height / 2) / 10) * (Terrain::Width / 10);
 }
@@ -65,8 +74,8 @@ void World::add(std::unique_ptr<Entity> &&ent)
 {
   auto entPtr = ent.get();
   grid[getGridIdx(entPtr->getX(), entPtr->getY())].insert(entPtr);
-  if (entPtr->isActive())
-    active.insert(entPtr);
+  if (auto e = dynamic_cast<ActiveEntity *>(entPtr))
+    active.insert(e);
   entities.emplace(entPtr, std::move(ent));
 }
 
