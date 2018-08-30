@@ -18,8 +18,21 @@ COEFF(BotRotationSpeed, 0.03f);
 COEFF(BotChargeRate, 3);
 COEFF(BuildEnergy, 300);
 
-Bot::Bot(World &world, float x, float y, uint16_t aMaxEnergy, uint16_t aMaxMatter, const Ram &aRam)
-  : Entity(world, x, y), maxEnergy(aMaxEnergy), maxMatter(aMaxMatter), ram(aRam)
+int Bot::lastId = 0;
+
+Bot::Bot(World &world,
+         float x,
+         float y,
+         uint16_t aMaxEnergy,
+         uint16_t aMaxMatter,
+         int aMaxAge,
+         const Ram &aRam)
+  : Entity(world, x, y),
+    id(lastId++),
+    maxEnergy(aMaxEnergy),
+    maxMatter(aMaxMatter),
+    maxAge(aMaxAge),
+    ram(aRam)
 {
   for (auto &r: reg)
     r = 0;
@@ -109,6 +122,9 @@ void Bot::tick()
 {
   if (rand() % 40000 == 0)
     ram[rand() % RamSize] = rand() % 0x10000; // make bot code mutate
+  ++age;
+  if (age > maxAge && id != 0)
+    world->kill(*this);
 
   if (busyCount > 0)
   {
@@ -154,7 +170,7 @@ void Bot::tick()
     move = Move::Stop;
     if (energy < TakeEnergy)
       break;
-    if (matter + StoneMatter > maxMatter)
+    if (matter + Stone::Matter > maxMatter)
       break;
     Entity *clEnt = nullptr;
     float minDist;
@@ -177,7 +193,7 @@ void Bot::tick()
     if (minDist >= 0.5f)
       break;
     energy -= TakeEnergy;
-    matter += StoneMatter;
+    matter += Stone::Matter;
     world->remove(*clEnt);
     break;
   }
@@ -185,12 +201,12 @@ void Bot::tick()
     move = Move::Stop;
     if (energy < BuildEnergy)
       break;
-    if (matter < BuildMatter)
+    if (matter < Bot::Matter)
       break;
     energy -= BuildEnergy;
-    matter -= BuildMatter;
+    matter -= Bot::Matter;
     world->add(std::make_unique<Bot>(
-      *world, x + cos(direction), y + sin(direction), maxEnergy, maxMatter, ram));
+      *world, x + cos(direction), y + sin(direction), maxEnergy, maxMatter, maxAge, ram));
     break;
   case Move::BuildO2:
     move = Move::Stop;
@@ -462,4 +478,9 @@ void Bot::setRam(uint16_t addr, uint16_t value)
   }
   default: break;
   }
+}
+
+int Bot::getMatter() const
+{
+  return matter + Matter;
 }

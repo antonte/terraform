@@ -17,3 +17,8 @@ void O2Plant::draw()
   world->mvp.update();
   world->o2PlantObj->draw();
 }
+
+int O2Plant::getMatter() const
+{
+  return Matter;
+}

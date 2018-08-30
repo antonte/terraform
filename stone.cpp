@@ -21,3 +21,8 @@ void Stone::draw()
   world->mvp.update();
   world->stoneClass->level[0]->draw();
 }
+
+int Stone::getMatter() const
+{
+  return Matter;
+}

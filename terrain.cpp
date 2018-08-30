@@ -13,9 +13,6 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/vec_swizzle.hpp>
 
-COEFF(O2Level, 0.01f);
-COEFF(H2OLevel, 0.01f);
-
 Terrain::Terrain(Library &lib) : terrainTex(lib.getTexture("terrain"))
 {
   noise.SetNoiseType(FastNoise::SimplexFractal);
@@ -42,8 +39,8 @@ void Terrain::draw(World &world,
                    int minY,
                    int maxY)
 {
-  world.o2Level = O2Level;
-  world.h2OLevel = H2OLevel;
+  world.o2Level = world.getO2Level();
+  world.h2OLevel = world.getWaterLevel();
   world.terrainShad->use();
   world.mvp = glm::translate(glm::vec3(0.0f, 0.0, 0.0f)) *
                glm::rotate(-3.1415926f / 2, glm::vec3(1.0f, 0.0f, 0.0f));

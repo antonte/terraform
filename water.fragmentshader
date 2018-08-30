@@ -1,0 +1,10 @@
+out vec4 color;
+in vec2 uv;
+in vec3 vNormal;
+in float vTime;
+
+void main(){
+  float fDotProduct = max(0.0, dot(vNormal, vec3(.577, -.577, .577))) * 0.6;
+  vec3 rgb = vec3(0.0, 1.0, 1.0);
+  color = vec4(rgb * fDotProduct + rgb * 0.4, (sin(uv.x * 0.4 * sin(uv.y * 0.01) + 0.002 * time) + 1.0) * .3);
+}

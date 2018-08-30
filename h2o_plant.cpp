@@ -17,3 +17,9 @@ void H2OPlant::draw()
   world->mvp.update();
   world->h2OPlantObj->draw();
 }
+
+
+int H2OPlant::getMatter() const
+{
+  return Matter;
+}

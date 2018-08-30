@@ -13,6 +13,7 @@ public:
   float getY() const;
   void setXY(float x, float y);
   virtual void draw() = 0;
+  virtual int getMatter() const = 0;
 
 protected:
   World *world;

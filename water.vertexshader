@@ -1,0 +1,13 @@
+layout(location = 0) in vec3 vertexPosition_modelspace;
+out vec3 vNormal;
+out vec2 uv;
+out float vTime;
+
+void main()
+{
+  mat4 tmp = proj * view * mvp;
+  gl_Position = tmp * vec4(vertexPosition_modelspace, 1.0);
+  vNormal = (tmp * vec4(0.0, 0.0, 1.0, 0.0)).xyz;
+  uv = vertexPosition_modelspace.xy;
+  vTime = time;
+}

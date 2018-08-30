@@ -17,3 +17,8 @@ void Tree::draw()
   world->mvp.update();
   world->treeObj->draw();
 }
+
+int Tree::getMatter() const
+{
+  return Matter;
+}

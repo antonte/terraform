@@ -4,6 +4,7 @@ layout(location = 2) in vec3 vertexNormal;
 out vec2 uv;
 out vec3 vNormal;
 out float vO2Level;
+flat out int isUnderWater;
 
 mat4 rotate(float angle, vec3 axis)
 {
@@ -20,9 +21,10 @@ mat4 rotate(float angle, vec3 axis)
 
 void main()
 {
-  gl_Position =
-    proj * view * mvp * rotate(-3.1415926 / 2, vec3(1, 0, 0)) * vec4(vertexPosition_modelspace, 1.0);
+  mat4 tmp = proj * view * mvp;
+  gl_Position = tmp * rotate(-3.1415926 / 2, vec3(1, 0, 0)) * vec4(vertexPosition_modelspace, 1.0);
   uv = vertexUV;
-  vNormal = (proj * view * mvp * rotate(3.1415926, vec3(1, 0, 0)) * vec4(vertexNormal, 0.0)).xyz;
+  vNormal = (tmp * rotate(3.1415926 / 2, vec3(1, 0, 0)) * vec4(vertexNormal, 0.0)).xyz;
   vO2Level = o2Level;
+  isUnderWater = ((vertexPosition_modelspace.z + 15.0) / 10.0 < h2OLevel) ? 1 : 0;
 }

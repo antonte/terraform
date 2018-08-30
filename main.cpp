@@ -21,7 +21,7 @@ int main()
 {
   CoefficientRegistry::instance().load();
   sdl::Init init(SDL_INIT_EVERYTHING);
-  sdl::Window win("Terraform", 64, 100, World::Width, World::Height, SDL_WINDOW_OPENGL);
+  sdl::Window win("Terraform", 64, 100, World::ScreenWidth, World::ScreenHeight, SDL_WINDOW_OPENGL);
   sdl::Renderer rend(win.get(), -1, 0);
   // set up OpenGL flags
   glEnable(GL_DEPTH_TEST);
@@ -35,7 +35,7 @@ int main()
   Library lib(rend.get());
 
   World world(lib);
-  world.add(std::make_unique<Bot>(world, 0, 0, 2000, 200));
+  auto &&firstBot = world.add(std::make_unique<Bot>(world, 0, 0, 2000, 200, 12000));
   for (auto i = 0; i < 100000; ++i)
     world.add(
       std::make_unique<Stone>(world,
@@ -70,6 +70,8 @@ int main()
   while (!done)
   {
     while (evHand.poll()) {}
+    camX = firstBot->getX();
+    camY = firstBot->getY();
     glClearColor(0.2f, 0.5f, 0.8f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     world.draw(camX, camY, camZ);

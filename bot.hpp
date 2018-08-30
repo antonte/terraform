@@ -11,13 +11,14 @@ public:
       float y,
       uint16_t maxEnergy,
       uint16_t maxMatter,
+      int maxAge,
       const Ram &ram = Program::Default.data());
   void draw() override;
   void tick() override;
+  static const int Matter = 100;
+  int getMatter() const override;
 private:
   static const int TakeEnergy = 10;
-  static const int BuildMatter = 100;
-  static const int StoneMatter = 10;
   enum class Addr {
     Move = 0xfff6,       // writing to this address makes bot to do something:
                          // 0 - stop
@@ -39,10 +40,14 @@ private:
     Energy = 0xffff,     // reading from this address will return amount of energy the cell has
   };
 
+  static int lastId;
+  int id;
   uint16_t energy = 250;
   uint16_t matter = 0;
+  int age = 0;
   uint16_t maxEnergy;
   uint16_t maxMatter;
+  int maxAge;
   std::array<uint16_t, 32> reg; // reg[0] - ip
   Ram ram;
   uint16_t getRam(uint16_t addr);
@@ -67,7 +72,7 @@ private:
 /*
   - Just standing will add 1-point of energy every tick
   - Moving will take away 2-points of energy every tick
-  - Building will take away 1000-points of energy and 100-points of matter and also will require
+  - Building will take away 400-points of energy and 100-points of matter and also will require
   50-ticks
   - Every stone will give 10-points of matter
 
