@@ -1,7 +1,10 @@
 #include "bot.hpp"
 #include "bot_class.hpp"
+#include "h2o_plant.hpp"
+#include "o2_plant.hpp"
 #include "stone.hpp"
 #include "terrain.hpp"
+#include "tree.hpp"
 #include "world.hpp"
 #include <SDL.h>
 #include <algorithm>
@@ -17,6 +20,8 @@ COEFF(BotSpeed, 0.03f);
 COEFF(BotRotationSpeed, 0.03f);
 COEFF(BotChargeRate, 3);
 COEFF(BuildEnergy, 300);
+COEFF(SpawnDistance, 5);
+COEFF(TTL, 1000.0f);
 
 int Bot::lastId = 0;
 
@@ -123,8 +128,13 @@ void Bot::tick()
   if (rand() % 40000 == 0)
     ram[rand() % RamSize] = rand() % 0x10000; // make bot code mutate
   ++age;
-  if (age > maxAge && id != 0)
+  if (age > maxAge /*&& id != 0*/)
     world->kill(*this);
+
+  botCrowdMeter *= 0.99f;
+  o2CrowdMeter *= 0.99f;
+  h2oCrowdMeter *= 0.99f;
+  treeCrowdMeter *= 0.99f;
 
   if (busyCount > 0)
   {
@@ -205,8 +215,24 @@ void Bot::tick()
       break;
     energy -= BuildEnergy;
     matter -= Bot::Matter;
-    world->add(std::make_unique<Bot>(
-      *world, x + cos(direction), y + sin(direction), maxEnergy, maxMatter, maxAge, ram));
+    if (botCrowdMeter <= o2CrowdMeter && botCrowdMeter <= h2oCrowdMeter &&
+        botCrowdMeter <= treeCrowdMeter)
+      world->add(std::make_unique<Bot>(*world,
+                                       x + SpawnDistance * cos(direction),
+                                       y + SpawnDistance * sin(direction),
+                                       maxEnergy,
+                                       maxMatter,
+                                       maxAge,
+                                       ram));
+    else if (o2CrowdMeter <= h2oCrowdMeter && o2CrowdMeter <= treeCrowdMeter)
+      world->add(std::make_unique<O2Plant>(
+        *world, TTL, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
+    else if (h2oCrowdMeter <= treeCrowdMeter)
+      world->add(std::make_unique<H2OPlant>(
+        *world, TTL, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
+    else
+      world->add(std::make_unique<Tree>(
+        *world, TTL, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
     break;
   case Move::BuildO2:
     move = Move::Stop;
@@ -412,15 +438,23 @@ uint16_t Bot::getRam(uint16_t addr)
       {
         if (ent == this)
           continue;
-        if (!dynamic_cast<Stone *>(ent))
-          continue;
-        auto dist = std::hypot(ent->getX() - x, ent->getY() - y);
-        if (!clEnt || dist < minDist)
+        if (dynamic_cast<Stone *>(ent))
         {
-          clEnt = ent;
-          minDist = dist;
-          continue;
+          auto dist = std::hypot(ent->getX() - x, ent->getY() - y);
+          if (!clEnt || dist < minDist)
+          {
+            clEnt = ent;
+            minDist = dist;
+          }
         }
+        else if (dynamic_cast<Bot *>(ent))
+          ++botCrowdMeter;
+        else if (dynamic_cast<O2Plant *>(ent))
+          ++o2CrowdMeter;
+        else if (dynamic_cast<H2OPlant *>(ent))
+          ++h2oCrowdMeter;
+        else if (dynamic_cast<Tree *>(ent))
+          ++treeCrowdMeter;
       }
       if (!clEnt)
         return static_cast<uint16_t>(Move::Frwd);

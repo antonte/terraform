@@ -67,6 +67,10 @@ private:
   Move move = Move::Stop;
   static std::string opCodeToString(uint16_t opCode);
   int busyCount = 0;
+  float botCrowdMeter = 0.0f;
+  float o2CrowdMeter = 100.0f;
+  float h2oCrowdMeter = 100.0f;
+  float treeCrowdMeter = 100.0f;
 };
 
 /*

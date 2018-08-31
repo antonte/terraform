@@ -1,14 +1,17 @@
 #include "h2o_plant.hpp"
 
-#include "world.hpp"
 #include "terrain.hpp"
+#include "world.hpp"
 #include <shade/obj.hpp>
 #include <shade/shader_program.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
-H2OPlant::H2OPlant(World &world, float x, float y) : Entity(world, x, y) {}
+H2OPlant::H2OPlant(World &world, int ttl, float x, float y) : Entity(world, x, y)
+{
+  world.sched([this]() { this->world->kill(*this); }, ttl);
+}
 
 void H2OPlant::draw()
 {
@@ -17,7 +20,6 @@ void H2OPlant::draw()
   world->mvp.update();
   world->h2OPlantObj->draw();
 }
-
 
 int H2OPlant::getMatter() const
 {

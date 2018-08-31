@@ -128,9 +128,7 @@ void World::tick()
   for (auto &&ent : active)
     ent->tick();
 
-  for (auto &&ent : killArray)
-    remove(*ent);
-  killArray.clear();
+  sched.tick();
 }
 
 void World::move(Entity &ent, float x, float y)
@@ -175,8 +173,7 @@ void World::remove(Entity &ent)
 
 void World::kill(Entity &ent)
 {
-  killArray.push_back(&ent);
-
+  sched([this, &ent]() { remove(ent); });
   auto a = 0.0f;
   for (auto mat = ent.getMatter(); mat > 0;)
   {

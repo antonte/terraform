@@ -1,4 +1,5 @@
 #pragma once
+#include "sched.hpp"
 #include <memory>
 #include <shade/var.hpp>
 #include <unordered_map>
@@ -36,7 +37,7 @@ public:
   void remove(Entity &);
   void kill(Entity &);
 
-  static const int ScreenWidth = 1280;
+  static const int ScreenWidth = 720 * 720 / 1280;
   static const int ScreenHeight = 720;
   std::unique_ptr<BotClass> botClass;
   std::unique_ptr<StoneClass> stoneClass;
@@ -48,6 +49,7 @@ public:
   std::unique_ptr<Obj> o2PlantObj;
   std::unique_ptr<Obj> h2OPlantObj;
   std::unique_ptr<Obj> treeObj;
+  Sched sched;
 
 private:
   Var<glm::mat4> proj;
@@ -64,5 +66,4 @@ private:
   std::unordered_set<ActiveEntity *> active;
   std::unique_ptr<ArrayBuffer> waterMesh;
   std::unique_ptr<ShaderProgram> waterShad;
-  std::vector<Entity *> killArray;
 };

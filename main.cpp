@@ -35,7 +35,7 @@ int main()
   Library lib(rend.get());
 
   World world(lib);
-  auto &&firstBot = world.add(std::make_unique<Bot>(world, 0, 0, 2000, 200, 12000));
+  world.add(std::make_unique<Bot>(world, 0, 0, 2000, 200, 12000));
   for (auto i = 0; i < 100000; ++i)
     world.add(
       std::make_unique<Stone>(world,
@@ -70,8 +70,6 @@ int main()
   while (!done)
   {
     while (evHand.poll()) {}
-    camX = firstBot->getX();
-    camY = firstBot->getY();
     glClearColor(0.2f, 0.5f, 0.8f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     world.draw(camX, camY, camZ);
@@ -83,10 +81,13 @@ int main()
       frames = 0;
       nextMeasure += 1000;
     }
-    while (SDL_GetTicks() > tickTime)
+    auto currentTick = SDL_GetTicks();
+    while (currentTick > tickTime)
     {
       world.tick();
-      tickTime += 10;
+      tickTime += 3;
     }
+    if (currentTick > tickTime + 100)
+      tickTime = currentTick;
   }
 }

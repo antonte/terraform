@@ -8,7 +8,10 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
-O2Plant::O2Plant(World &world, float x, float y) : Entity(world, x, y) {}
+O2Plant::O2Plant(World &world, int ttl, float x, float y) : Entity(world, x, y)
+{
+  world.sched([this]() { this->world->kill(*this); }, ttl);
+}
 
 void O2Plant::draw()
 {
