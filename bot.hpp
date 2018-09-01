@@ -13,6 +13,7 @@ public:
       uint16_t maxMatter,
       int maxAge,
       const Ram &ram = Program::Default.data());
+  ~Bot();
   void draw() override;
   void tick() override;
   static const int Matter = 100;

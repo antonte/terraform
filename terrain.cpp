@@ -13,15 +13,20 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/vec_swizzle.hpp>
 
+FastNoise Terrain::noise;
+
 Terrain::Terrain(Library &lib) : terrainTex(lib.getTexture("terrain"))
 {
+  terrainTex->glBind(nullptr, nullptr);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   noise.SetNoiseType(FastNoise::SimplexFractal);
 }
 
 Terrain::~Terrain()
 {}
 
-float Terrain::getZ(float x, float y) const
+float Terrain::getZ(float x, float y)
 {
   return 20.0f * noise.GetNoise(x, y);
 }
@@ -46,13 +51,14 @@ void Terrain::draw(World &world,
                glm::rotate(-3.1415926f / 2, glm::vec3(1.0f, 0.0f, 0.0f));
   world.mvp.update();
   terrainTex->glBind(nullptr, nullptr);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
   const auto Sz = TerrainChunk::ChunkSize;
   for (int y = minY - Sz; y < maxY + Sz; y += Sz)
     for (int x = minX - Sz; x < maxX + Sz; x += Sz)
     {
+      if (x < -Terrain::Width / 2 || x > Terrain::Width / 2 || y < -Terrain::Height / 2 ||
+          y > Terrain::Height / 2)
+        continue;
       auto it = cache.find(getChunkIdx(x, y));
       if (it == std::end(cache))
       {

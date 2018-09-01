@@ -8,6 +8,10 @@
 #include <shade/library.hpp>
 #include <shade/shader_program.hpp>
 #include <shade/var.hpp>
+#include <shade/text.hpp>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/transform.hpp>
 
 #define GL_GLEXT_PROTOTYPES 1
 #include <SDL_opengl.h>
@@ -24,23 +28,27 @@ int main()
   sdl::Window win("Terraform", 64, 100, World::ScreenWidth, World::ScreenHeight, SDL_WINDOW_OPENGL);
   sdl::Renderer rend(win.get(), -1, 0);
   // set up OpenGL flags
-  glEnable(GL_DEPTH_TEST);
-  glDepthFunc(GL_LESS);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   auto camX = 0.0f;
   auto camY = 0.0f;
-  auto camZ = 20.0f;
+  auto camZ = 180.0f;
   Library lib(rend.get());
 
   World world(lib);
-  world.add(std::make_unique<Bot>(world, 0, 0, 2000, 200, 12000));
-  for (auto i = 0; i < 100000; ++i)
-    world.add(
-      std::make_unique<Stone>(world,
-                              rand() % (Terrain::Width * 10) / 10.0f - Terrain::Width / 2,
-                              rand() % (Terrain::Height * 10) / 10.0f - Terrain::Height / 2));
+  world.add(std::make_unique<Bot>(world, 0, 0, 2000, 200, 60000));
+  for (auto i = 0; i < 100000 / 25;)
+  {
+    auto x = rand() % (Terrain::Width * 10) / 10.0f - Terrain::Width / 2;
+    auto y = rand() % (Terrain::Height * 10) / 10.0f - Terrain::Height / 2;
+    auto p = Terrain::getZ(x, y) + 20;
+    if (rand() % 40 < p)
+    {
+      world.add(std::make_unique<Stone>(world, x, y));
+      ++i;
+    }
+  }
   auto done = false;
   sdl::EventHandler evHand;
   evHand.quit = [&done](const SDL_QuitEvent &) { done = true; };
@@ -49,6 +57,8 @@ int main()
       return;
     camX -= CamMoveSpeed * e.xrel * camZ;
     camY += CamMoveSpeed * e.yrel * camZ;
+    camX = std::max(std::min(camX, Terrain::Width / 2.0f), -Terrain::Width / 2.0f);
+    camY = std::max(std::min(camY, Terrain::Height / 2.0f), -Terrain::Height / 2.0f);
   };
   evHand.mouseWheel = [&camZ](const SDL_MouseWheelEvent &e) {
     camZ = camZ * exp(e.y * CamZoomSpeed);
@@ -67,20 +77,47 @@ int main()
   auto nextMeasure = SDL_GetTicks() + 1000U;
   auto tickTime = SDL_GetTicks();
 
+  Var<glm::mat4> proj("proj");
+  Var<glm::mat4> mvp("mvp");
+  Var<glm::vec4> color("textColor");
+  ShaderProgram textShad("text", "text", proj, mvp, color);
+
+  Text text(lib, "font");
+  text.setText("Lorem Ipsum is simply dummy text of the printing and typesetting industry.");
+
+  int fps = 0;
+
   while (!done)
   {
     while (evHand.poll()) {}
-    glClearColor(0.2f, 0.5f, 0.8f, 1.0f);
+    // glClearColor(0.2f, 0.5f, 0.8f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     world.draw(camX, camY, camZ);
-    rend.present();
+
     ++frames;
     if (SDL_GetTicks() > nextMeasure)
     {
       LOG("fps", frames);
+      fps = frames;
       frames = 0;
       nextMeasure += 1000;
     }
+
+    glDisable(GL_DEPTH_TEST);
+    proj = glm::ortho(0.0f, 1.0f * World::ScreenWidth, 1.0f * World::ScreenHeight, 0.0f);
+    textShad.use();
+    mvp = glm::translate(glm::vec3(0.0f, 0.0f, 0.0f)) * scale(glm::vec3(20.0f, 20.0f, 1.0f));
+    color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    mvp.update();
+    color.update();
+    text.setText("FPS: " + std::to_string(fps));
+    text.draw();
+
+    rend.present();
+
     auto currentTick = SDL_GetTicks();
     while (currentTick > tickTime)
     {

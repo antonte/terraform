@@ -1,6 +1,12 @@
 #include "entity.hpp"
+#include "terrain.hpp"
 
-Entity::Entity(World &aWorld, float aX, float aY) : world(&aWorld), x(aX), y(aY) {}
+Entity::Entity(World &aWorld, float aX, float aY)
+  : world(&aWorld),
+    x(std::max(std::min(aX, Terrain::Width / 2.0f), -Terrain::Width / 2.0f)),
+    y(std::max(std::min(aY, Terrain::Height / 2.0f), -Terrain::Height / 2.0f))
+{
+}
 
 float Entity::getX() const
 {

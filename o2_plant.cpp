@@ -11,6 +11,12 @@
 O2Plant::O2Plant(World &world, int ttl, float x, float y) : Entity(world, x, y)
 {
   world.sched([this]() { this->world->kill(*this); }, ttl);
+  ++world.o2PlantsNum;
+}
+
+O2Plant::~O2Plant()
+{
+  --world->o2PlantsNum;
 }
 
 void O2Plant::draw()

@@ -24,12 +24,12 @@ struct TerrainChunk
 class Terrain
 {
 public:
-  static const int Width = 5000;
-  static const int Height = 5000;
+  static const int Width = 1000;
+  static const int Height = 1000;
 
   Terrain(Library &);
   ~Terrain();
-  float getZ(float x, float y) const;
+  static float getZ(float x, float y);
   void draw(World &,
             int minX,
             int maxX,
@@ -37,7 +37,7 @@ public:
             int maxY);
 
 private:
-  FastNoise noise;
+  static FastNoise noise;
   sdl::Texture *terrainTex;
   mutable std::vector<glm::vec3> tmpVertices;
   mutable std::vector<glm::vec2> tmpUvs;

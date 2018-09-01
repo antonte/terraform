@@ -12,6 +12,12 @@ Tree::Tree(World &world, int ttl, float x, float y)
   : Entity(world, x, y)
 {
   world.sched([this]() { this->world->kill(*this); }, ttl);
+  ++world.treesNum;
+}
+
+Tree::~Tree()
+{
+  --world->treesNum;
 }
 
 void Tree::draw()

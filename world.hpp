@@ -37,7 +37,7 @@ public:
   void remove(Entity &);
   void kill(Entity &);
 
-  static const int ScreenWidth = 720 * 720 / 1280;
+  static const int ScreenWidth = 720;
   static const int ScreenHeight = 720;
   std::unique_ptr<BotClass> botClass;
   std::unique_ptr<StoneClass> stoneClass;
@@ -59,6 +59,11 @@ public:
   std::unique_ptr<ShaderProgram> shad;
   std::unique_ptr<ShaderProgram> botShad;
   std::unique_ptr<ShaderProgram> terrainShad;
+  std::unique_ptr<ShaderProgram> buildShad;
+  int botsNum = 0;
+  int o2PlantsNum = 0;
+  int h2OPlantsNum = 0;
+  int treesNum = 0;
 
 private:
   std::unordered_map<Entity *, std::unique_ptr<Entity>> entities;

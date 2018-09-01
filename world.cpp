@@ -14,19 +14,16 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
-COEFF(O2Level, 0.01f);
-COEFF(H2OLevel, 0.01f);
-
 static std::vector<glm::vec3> getWaterMesh()
 {
   std::vector<glm::vec3> res;
-  res.push_back(glm::vec3(-1.0f * Terrain::Width, -1.0f * Terrain::Height, 0.0f));
-  res.push_back(glm::vec3(1.0f * Terrain::Width, 1.0f * Terrain::Height, 0.0f));
-  res.push_back(glm::vec3(1.0f * Terrain::Width, -1.0f * Terrain::Height, 0.0f));
+  res.push_back(glm::vec3(-1.0f * Terrain::Width / 2.0f, -1.0f * Terrain::Height / 2.0f, 0.0f));
+  res.push_back(glm::vec3(1.0f * Terrain::Width / 2.0f, 1.0f * Terrain::Height / 2.0f, 0.0f));
+  res.push_back(glm::vec3(1.0f * Terrain::Width / 2.0f, -1.0f * Terrain::Height / 2.0f, 0.0f));
 
-  res.push_back(glm::vec3(-1.0f * Terrain::Width, -1.0f * Terrain::Height, 0.0f));
-  res.push_back(glm::vec3(-1.0f * Terrain::Width, 1.0f * Terrain::Height, 0.0f));
-  res.push_back(glm::vec3(1.0f * Terrain::Width, 1.0f * Terrain::Height, 0.0f));
+  res.push_back(glm::vec3(-1.0f * Terrain::Width / 2.0f, -1.0f * Terrain::Height / 2.0f, 0.0f));
+  res.push_back(glm::vec3(-1.0f * Terrain::Width / 2.0f, 1.0f * Terrain::Height / 2.0f, 0.0f));
+  res.push_back(glm::vec3(1.0f * Terrain::Width / 2.0f, 1.0f * Terrain::Height / 2.0f, 0.0f));
   return res;
 }
 
@@ -35,8 +32,8 @@ World::World(Library &lib)
     stoneClass(std::make_unique<StoneClass>(lib)),
     terrain(std::make_unique<Terrain>(lib)),
     mvp("mvp"),
-    o2Level("o2Level"),
-    h2OLevel("h2OLevel"),
+    o2Level("o2Level", 0.0f),
+    h2OLevel("h2OLevel", 0.0f),
     time("time"),
     o2PlantObj(std::make_unique<Obj>(lib, "o2_plant")),
     h2OPlantObj(std::make_unique<Obj>(lib, "h2o_plant")),
@@ -54,6 +51,7 @@ World::World(Library &lib)
                                             botClass->matter)),
     terrainShad(
       std::make_unique<ShaderProgram>("terrain", "terrain", mvp, proj, view, o2Level, h2OLevel)),
+    buildShad(std::make_unique<ShaderProgram>("build", "build", mvp, proj, view)),
     waterMesh(std::make_unique<ArrayBuffer>(getWaterMesh(), 0)),
     waterShad(std::make_unique<ShaderProgram>("water", "water", mvp, proj, view, h2OLevel, time))
 {
@@ -109,22 +107,23 @@ Entity *World::add(std::unique_ptr<Entity> &&ent)
 
 float World::getO2Level() const
 {
-  return O2Level;
+  return o2Level.get();
 }
 
 float World::getWaterLevel() const
 {
-  return H2OLevel;
+  return h2OLevel.get();
 }
 
 float World::getTreeLevel() const
 {
-  // TODO
-  return 0.0f;
+  return treesNum;
 }
 
 void World::tick()
 {
+  o2Level += o2PlantsNum * 1e-7f;
+  h2OLevel += h2OPlantsNum * 1e-7f;
   for (auto &&ent : active)
     ent->tick();
 

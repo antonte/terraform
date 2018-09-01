@@ -22,6 +22,8 @@ COEFF(BotChargeRate, 3);
 COEFF(BuildEnergy, 300);
 COEFF(SpawnDistance, 5);
 COEFF(TTL, 1000.0f);
+COEFF(TakeTime, 100.0f);
+COEFF(BuildTime, 1000.0f);
 
 int Bot::lastId = 0;
 
@@ -41,8 +43,14 @@ Bot::Bot(World &world,
 {
   for (auto &r: reg)
     r = 0;
+  ++world.botsNum;
   // for (auto i = 0; i < RamSize; ++i)
   //   LOG(i, opCodeToString(ram[i]));
+}
+
+Bot::~Bot()
+{
+  --world->botsNum;
 }
 
 void Bot::draw()
@@ -52,6 +60,14 @@ void Bot::draw()
   world->botClass->energy = 1.0 * energy / maxEnergy;
   world->botClass->matter = 1.0 * matter / maxMatter;
   world->botShad->use();
+
+  auto getBuildingObjMvp = [this]() {
+    return glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y) + 10)) *
+           glm::rotate(direction - 3.1415926f / 4.0f, glm::vec3(0.0f, 0.0f, 1.0f)) *
+           glm::translate(glm::vec3(SpawnDistance, SpawnDistance, 0.0f)) *
+           glm::rotate(SDL_GetTicks() * 0.001f, glm::vec3(0.0f, 0.0f, 1.0f));
+  };
+
   if (energy < BotChargeRate + 1)
   {
     auto &&anim = world->botClass->idleAnim;
@@ -100,27 +116,49 @@ void Bot::draw()
   {
     auto &&anim = world->botClass->busyAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
+
+    world->mvp = getBuildingObjMvp();
+    world->buildShad->use();
+    auto &&buildAnim = world->botClass->idleAnim;
+    buildAnim[SDL_GetTicks() * 30 / 1000 % buildAnim.size()]->draw();
   }
   break;
   case Move::BuildO2:
   {
     auto &&anim = world->botClass->busyAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
+    world->mvp = getBuildingObjMvp();
+    world->buildShad->use();
+    world->o2PlantObj->draw();
   }
   break;
   case Move::BuildWater:
   {
     auto &&anim = world->botClass->busyAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
+    world->mvp = getBuildingObjMvp();
+    world->buildShad->use();
+    world->h2OPlantObj->draw();
   }
   break;
   case Move::PlantTree:
   {
     auto &&anim = world->botClass->busyAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
+    world->mvp = getBuildingObjMvp();
+    world->buildShad->use();
+    world->treeObj->draw();
   }
   break;
   }
+}
+
+static float sign(float val)
+{
+  if (val < 0)
+    return -1.0f;
+  else
+    return 1.0f;
 }
 
 void Bot::tick()
@@ -131,16 +169,20 @@ void Bot::tick()
   if (age > maxAge /*&& id != 0*/)
     world->kill(*this);
 
-  botCrowdMeter *= 0.99f;
-  o2CrowdMeter *= 0.99f;
-  h2oCrowdMeter *= 0.99f;
-  treeCrowdMeter *= 0.99f;
+  botCrowdMeter *= 0.9999f;
+  o2CrowdMeter *= 0.9999f;
+  h2oCrowdMeter *= 0.9999f;
+  treeCrowdMeter *= 0.9999f;
 
   if (busyCount > 0)
   {
     --busyCount;
     return;
   }
+
+  if (x < -Terrain::Width / 2.0f || x > Terrain::Width / 2.0f || y < -Terrain::Height / 2.0f ||
+      y > Terrain::Height / 2.0f)
+    direction = atan2(-sign(y) * abs(sin(direction)), -sign(x) * abs(cos(direction)));
 
   switch (move)
   {
@@ -215,42 +257,46 @@ void Bot::tick()
       break;
     energy -= BuildEnergy;
     matter -= Bot::Matter;
-    if (botCrowdMeter <= o2CrowdMeter && botCrowdMeter <= h2oCrowdMeter &&
-        botCrowdMeter <= treeCrowdMeter)
-      world->add(std::make_unique<Bot>(*world,
-                                       x + SpawnDistance * cos(direction),
-                                       y + SpawnDistance * sin(direction),
-                                       maxEnergy,
-                                       maxMatter,
-                                       maxAge,
-                                       ram));
-    else if (o2CrowdMeter <= h2oCrowdMeter && o2CrowdMeter <= treeCrowdMeter)
-      world->add(std::make_unique<O2Plant>(
-        *world, TTL, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
-    else if (h2oCrowdMeter <= treeCrowdMeter)
-      world->add(std::make_unique<H2OPlant>(
-        *world, TTL, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
-    else
-      world->add(std::make_unique<Tree>(
-        *world, TTL, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
+    world->add(std::make_unique<Bot>(*world,
+                                     x + SpawnDistance * cos(direction),
+                                     y + SpawnDistance * sin(direction),
+                                     maxEnergy,
+                                     maxMatter,
+                                     maxAge,
+                                     ram));
     break;
   case Move::BuildO2:
     move = Move::Stop;
     if (energy < BuildEnergy)
       break;
-    // TODO
+    if (matter < Bot::Matter)
+      break;
+    energy -= BuildEnergy;
+    matter -= Bot::Matter;
+    world->add(std::make_unique<O2Plant>(
+      *world, 12000, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
     break;
   case Move::BuildWater:
     move = Move::Stop;
     if (energy < BuildEnergy)
       break;
-    // TODO
+    if (matter < Bot::Matter)
+      break;
+    energy -= BuildEnergy;
+    matter -= Bot::Matter;
+    world->add(std::make_unique<H2OPlant>(
+      *world, 12000, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
     break;
   case Move::PlantTree:
     move = Move::Stop;
     if (energy < BuildEnergy)
       break;
-    // TODO
+    if (matter < Bot::Matter)
+      break;
+    energy -= BuildEnergy;
+    matter -= Bot::Matter;
+    world->add(std::make_unique<Tree>(
+      *world, 12000, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
     break;
   }
 
@@ -500,11 +546,22 @@ void Bot::setRam(uint16_t addr, uint16_t value)
     case Move::Right:
     case Move::Bckwd:
     case Move::Left: break;
-    case Move::Take: busyCount = 10; break;
+    case Move::Take: busyCount = TakeTime; break;
     case Move::BuildBot:
+      if (botCrowdMeter <= o2CrowdMeter && botCrowdMeter <= h2oCrowdMeter &&
+          botCrowdMeter <= treeCrowdMeter)
+        value = static_cast<int>(Move::BuildBot);
+      else if (o2CrowdMeter <= h2oCrowdMeter && o2CrowdMeter <= treeCrowdMeter)
+        value = static_cast<int>(Move::BuildO2);
+      else if (h2oCrowdMeter <= treeCrowdMeter)
+        value = static_cast<int>(Move::BuildWater);
+      else
+        value = static_cast<int>(Move::PlantTree);
+      busyCount = BuildTime;
+      break;
     case Move::BuildO2:
     case Move::BuildWater:
-    case Move::PlantTree: busyCount = 300; break;
+    case Move::PlantTree: busyCount = BuildTime; break;
     }
 
     move = static_cast<Move>(value);
