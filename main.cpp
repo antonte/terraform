@@ -2,6 +2,7 @@
 #include "stone.hpp"
 #include "terrain.hpp"
 #include "world.hpp"
+#include "tree.hpp"
 #include <coeff/coefficient_registry.hpp>
 #include <log/log.hpp>
 #include <sdlpp/sdlpp.hpp>
@@ -9,6 +10,7 @@
 #include <shade/shader_program.hpp>
 #include <shade/var.hpp>
 #include <shade/text.hpp>
+#include <iomanip>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
@@ -20,6 +22,7 @@ COEFF(CamMoveSpeed, 0.002f);
 COEFF(CamZoomSpeed, 0.1f);
 COEFF(MaxCamZ, 250.0f);
 COEFF(MinCamZ, 20.0f);
+COEFF(CamSpeed, 0.001f);
 
 int main()
 {
@@ -37,7 +40,7 @@ int main()
   Library lib(rend.get());
 
   World world(lib);
-  world.add(std::make_unique<Bot>(world, 0, 0, 2000, 200, 60000));
+  world.add(std::make_unique<Bot>(world, 0, 0, 2000, 200, 20000));
   for (auto i = 0; i < 100000 / 25;)
   {
     auto x = rand() % (Terrain::Width * 10) / 10.0f - Terrain::Width / 2;
@@ -83,14 +86,14 @@ int main()
   ShaderProgram textShad("text", "text", proj, mvp, color);
 
   Text text(lib, "font");
-  text.setText("Lorem Ipsum is simply dummy text of the printing and typesetting industry.");
-
   int fps = 0;
+
+  const Bot *botCam = nullptr;
 
   while (!done)
   {
     while (evHand.poll()) {}
-    // glClearColor(0.2f, 0.5f, 0.8f, 1.0f);
+
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -104,16 +107,31 @@ int main()
       fps = frames;
       frames = 0;
       nextMeasure += 1000;
+      if (!world.isAlive(*botCam))
+        botCam = world.getFirstBot();
     }
 
     glDisable(GL_DEPTH_TEST);
     proj = glm::ortho(0.0f, 1.0f * World::ScreenWidth, 1.0f * World::ScreenHeight, 0.0f);
     textShad.use();
+
     mvp = glm::translate(glm::vec3(0.0f, 0.0f, 0.0f)) * scale(glm::vec3(20.0f, 20.0f, 1.0f));
     color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     mvp.update();
     color.update();
     text.setText("FPS: " + std::to_string(fps));
+    text.draw();
+
+    mvp = glm::translate(glm::vec3(0.0f, 20.0f, -1.0f)) * scale(glm::vec3(20.0f, 20.0f, 1.0f));
+    color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    mvp.update();
+    color.update();
+    std::ostringstream stats;
+    stats << "O2: " << world.getO2Level()        //
+          << "\nH2O: " << world.getH2OLevel()    //
+          << "\nTrees: " << world.getTreeLevel() //
+      ;
+    text.setText(stats.str());
     text.draw();
 
     rend.present();
@@ -122,7 +140,12 @@ int main()
     while (currentTick > tickTime)
     {
       world.tick();
-      tickTime += 3;
+      tickTime += 2;
+      if (world.isAlive(*botCam) && botCam)
+      {
+        camX = (1.0f - CamSpeed) * camX + CamSpeed * botCam->getX();
+        camY = (1.0f - CamSpeed) * camY + CamSpeed * botCam->getY();
+      }
     }
     if (currentTick > tickTime + 100)
       tickTime = currentTick;

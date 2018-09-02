@@ -123,7 +123,7 @@ void Bot::draw()
     buildAnim[SDL_GetTicks() * 30 / 1000 % buildAnim.size()]->draw();
   }
   break;
-  case Move::BuildO2:
+  case Move::BuildO2Plant:
   {
     auto &&anim = world->botClass->busyAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
@@ -132,7 +132,7 @@ void Bot::draw()
     world->o2PlantObj->draw();
   }
   break;
-  case Move::BuildWater:
+  case Move::BuildH2OPlant:
   {
     auto &&anim = world->botClass->busyAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
@@ -166,7 +166,7 @@ void Bot::tick()
   if (rand() % 40000 == 0)
     ram[rand() % RamSize] = rand() % 0x10000; // make bot code mutate
   ++age;
-  if (age > maxAge /*&& id != 0*/)
+  if (age > maxAge)
     world->kill(*this);
 
   botCrowdMeter *= 0.9999f;
@@ -252,7 +252,10 @@ void Bot::tick()
   case Move::BuildBot:
     move = Move::Stop;
     if (energy < BuildEnergy)
+    {
+      energy = 0;
       break;
+    }
     if (matter < Bot::Matter)
       break;
     energy -= BuildEnergy;
@@ -265,10 +268,13 @@ void Bot::tick()
                                      maxAge,
                                      ram));
     break;
-  case Move::BuildO2:
+  case Move::BuildO2Plant:
     move = Move::Stop;
     if (energy < BuildEnergy)
+    {
+      energy = 0;
       break;
+    }
     if (matter < Bot::Matter)
       break;
     energy -= BuildEnergy;
@@ -276,10 +282,13 @@ void Bot::tick()
     world->add(std::make_unique<O2Plant>(
       *world, 12000, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
     break;
-  case Move::BuildWater:
+  case Move::BuildH2OPlant:
     move = Move::Stop;
     if (energy < BuildEnergy)
+    {
+      energy = 0;
       break;
+    }
     if (matter < Bot::Matter)
       break;
     energy -= BuildEnergy;
@@ -290,13 +299,16 @@ void Bot::tick()
   case Move::PlantTree:
     move = Move::Stop;
     if (energy < BuildEnergy)
+    {
+      energy = 0;
       break;
+    }
     if (matter < Bot::Matter)
       break;
     energy -= BuildEnergy;
     matter -= Bot::Matter;
     world->add(std::make_unique<Tree>(
-      *world, 12000, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
+      *world, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
     break;
   }
 
@@ -520,7 +532,7 @@ uint16_t Bot::getRam(uint16_t addr)
     }
     return 0;
   case Addr::O2Level: return world->getO2Level() * 100;
-  case Addr::WaterLevel: return world->getWaterLevel() * 100;
+  case Addr::H2OLevel: return world->getH2OLevel() * 100;
   case Addr::TreeLevel: return world->getTreeLevel() * 100;
   case Addr::Matter: return 100 * matter / maxMatter;
   case Addr::Energy: return 100 * energy / maxEnergy;
@@ -552,15 +564,15 @@ void Bot::setRam(uint16_t addr, uint16_t value)
           botCrowdMeter <= treeCrowdMeter)
         value = static_cast<int>(Move::BuildBot);
       else if (o2CrowdMeter <= h2oCrowdMeter && o2CrowdMeter <= treeCrowdMeter)
-        value = static_cast<int>(Move::BuildO2);
+        value = static_cast<int>(Move::BuildO2Plant);
       else if (h2oCrowdMeter <= treeCrowdMeter)
-        value = static_cast<int>(Move::BuildWater);
+        value = static_cast<int>(Move::BuildH2OPlant);
       else
         value = static_cast<int>(Move::PlantTree);
       busyCount = BuildTime;
       break;
-    case Move::BuildO2:
-    case Move::BuildWater:
+    case Move::BuildO2Plant:
+    case Move::BuildH2OPlant:
     case Move::PlantTree: busyCount = BuildTime; break;
     }
 

@@ -44,8 +44,6 @@ void Terrain::draw(World &world,
                    int minY,
                    int maxY)
 {
-  world.o2Level = world.getO2Level();
-  world.h2OLevel = world.getWaterLevel();
   world.terrainShad->use();
   world.mvp = glm::translate(glm::vec3(0.0f, 0.0, 0.0f)) *
                glm::rotate(-3.1415926f / 2, glm::vec3(1.0f, 0.0f, 0.0f));

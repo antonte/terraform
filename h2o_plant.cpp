@@ -11,12 +11,12 @@
 H2OPlant::H2OPlant(World &world, int ttl, float x, float y) : Entity(world, x, y)
 {
   world.sched([this]() { this->world->kill(*this); }, ttl);
-  ++world.h2OPlantsNum;
+  ++world.h2ORate;
 }
 
 H2OPlant::~H2OPlant()
 {
-  --world->h2OPlantsNum;
+  --world->h2ORate;
 }
 
 void H2OPlant::draw()

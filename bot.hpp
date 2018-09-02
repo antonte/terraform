@@ -35,7 +35,7 @@ private:
     StoneScan = 0xfff9,  // reading this address will return recommended command to reach the
                          // closest stone
     O2Level = 0xfffa,    // level of O2 on the planet
-    WaterLevel = 0xfffb, // amount of water on the planet
+    H2OLevel = 0xfffb, // amount of water on the planet
     TreeLevel = 0xfffc,  // amount of trees on the planet
     Matter = 0xfffe,     // reading from this address will return amount of matter the cell has
     Energy = 0xffff,     // reading from this address will return amount of energy the cell has
@@ -61,8 +61,8 @@ private:
     Left = 4,
     Take = 5,
     BuildBot = 6,
-    BuildO2 = 7,
-    BuildWater = 8,
+    BuildO2Plant = 7,
+    BuildH2OPlant = 8,
     PlantTree = 9
   };
   Move move = Move::Stop;

@@ -5,8 +5,24 @@
 class UnSched
 {
 public:
+  UnSched() = default;
   UnSched(std::function<void()> &&aFunc) : func(std::move(aFunc)) {}
-  ~UnSched() { func(); }
+  UnSched(const UnSched &unSched) = delete;
+  UnSched &operator=(const UnSched &unSched) = delete;
+  UnSched &operator=(UnSched &&unSched)
+  {
+    if (func)
+      func();
+    func = std::move(unSched.func);
+    unSched.func = nullptr;
+    return *this;
+  }
+  UnSched(UnSched &&unSched) : func(std::move(unSched.func)) { unSched.func = nullptr; }
+  ~UnSched()
+  {
+    if (func)
+      func();
+  }
 
 private:
   std::function<void()> func;

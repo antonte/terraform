@@ -6,8 +6,9 @@ void Sched::tick()
   while (!invokes.empty() && invokes.begin()->first.first <= now)
   {
     auto &&it = invokes.begin();
+    auto &&key = it->first;
     it->second();
-    invokes.erase(it);
+    invokes.erase(key);
   }
 }
 

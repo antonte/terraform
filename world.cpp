@@ -31,16 +31,15 @@ World::World(Library &lib)
   : botClass(std::make_unique<BotClass>(lib)),
     stoneClass(std::make_unique<StoneClass>(lib)),
     terrain(std::make_unique<Terrain>(lib)),
-    mvp("mvp"),
+
     o2Level("o2Level", 0.0f),
     h2OLevel("h2OLevel", 0.0f),
     time("time"),
-    o2PlantObj(std::make_unique<Obj>(lib, "o2_plant")),
-    h2OPlantObj(std::make_unique<Obj>(lib, "h2o_plant")),
-    treeObj(std::make_unique<Obj>(lib, "tree")),
     proj("proj",
          glm::perspective(glm::radians(45.0f), 1.0f * ScreenWidth / ScreenHeight, 0.1f, 1000.0f)),
     view("view"),
+    mvp("mvp"),
+    
     shad(std::make_unique<ShaderProgram>("shad", "shad", mvp, proj, view)),
     botShad(std::make_unique<ShaderProgram>("bot",
                                             "bot",
@@ -52,6 +51,10 @@ World::World(Library &lib)
     terrainShad(
       std::make_unique<ShaderProgram>("terrain", "terrain", mvp, proj, view, o2Level, h2OLevel)),
     buildShad(std::make_unique<ShaderProgram>("build", "build", mvp, proj, view)),
+
+    o2PlantObj(std::make_unique<Obj>(lib, "o2_plant")),
+    h2OPlantObj(std::make_unique<Obj>(lib, "h2o_plant")),
+    treeObj(std::make_unique<Obj>(lib, "tree")),
     waterMesh(std::make_unique<ArrayBuffer>(getWaterMesh(), 0)),
     waterShad(std::make_unique<ShaderProgram>("water", "water", mvp, proj, view, h2OLevel, time))
 {
@@ -89,7 +92,7 @@ void World::draw(float camX, float camY, float camZ)
         ent->draw();
     }
   // draw water
-  mvp = glm::translate(glm::vec3(0.0f, 0.0f, (getWaterLevel() * 10.0f - 15.0f)));
+  mvp = glm::translate(glm::vec3(0.0f, 0.0f, (getH2OLevel() * 10.0f - 15.0f)));
   time = SDL_GetTicks();
   waterShad->use();
   waterMesh->activate();
@@ -110,24 +113,27 @@ float World::getO2Level() const
   return o2Level.get();
 }
 
-float World::getWaterLevel() const
+float World::getH2OLevel() const
 {
   return h2OLevel.get();
 }
 
 float World::getTreeLevel() const
 {
-  return treesNum;
+  return treesNum / 1000.0f;
 }
 
 void World::tick()
 {
-  o2Level += o2PlantsNum * 1e-7f;
-  h2OLevel += h2OPlantsNum * 1e-7f;
+  realO2Level += o2Rate;
+  o2Level = realO2Level / 100000000.0f;
+  realH2OLevel += h2ORate;
+  h2OLevel = realH2OLevel / 100000000.0f;
   for (auto &&ent : active)
     ent->tick();
 
   sched.tick();
+  ++now;
 }
 
 void World::move(Entity &ent, float x, float y)
@@ -144,7 +150,7 @@ void World::move(Entity &ent, float x, float y)
 
 COEFF(LookupRadios, 5);
 
-std::vector<Entity *> World::getAround(float xx, float yy) const
+std::vector<Entity *> World::getAround(float xx, float yy, float rad) const
 {
   std::vector<Entity *> res;
   for (auto y = yy - 20; y <= yy + 20; y += 10)
@@ -154,7 +160,7 @@ std::vector<Entity *> World::getAround(float xx, float yy) const
       if (it == std::end(grid))
         continue;
       for (auto &&ent : it->second)
-        if (std::hypot(xx - ent->getX(), yy - ent->getY()) < LookupRadios)
+        if (std::hypot(xx - ent->getX(), yy - ent->getY()) < ((rad < 0) ? LookupRadios : rad))
           res.push_back(ent);
     }
   return res;
@@ -182,4 +188,23 @@ void World::kill(Entity &ent)
     mat -= st->getMatter();
     ++a;
   }
+}
+
+
+int World::getNow() const
+{
+  return now;
+}
+
+const Bot *World::getFirstBot() const
+{
+  for (auto &&ent : entities)
+    if (auto bot = dynamic_cast<const Bot *>(ent.first))
+      return bot;
+  return nullptr;
+}
+
+bool World::isAlive(const Entity &ent) const
+{
+  return entities.find(&ent) != std::end(entities);
 }
