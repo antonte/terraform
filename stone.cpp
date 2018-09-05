@@ -15,11 +15,9 @@ Stone::Stone(World &world, float x, float y) : Entity(world, x, y)
 
 void Stone::draw()
 {
-  world->shad->use();
-  world->mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y))) *
-        glm::rotate(direction, glm::vec3(0.0f, 0.0f, 1.0f));
-  world->mvp.update();
-  world->stoneClass->level[0]->draw();
+  // world->stoneMvps.push_back(glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y))) *
+  //                            glm::rotate(direction, glm::vec3(0.0f, 0.0f, 1.0f)));
+  world->stoneMvps.push_back(glm::vec3(x, y, world->terrain->getZ(x, y)));
 }
 
 int Stone::getMatter() const

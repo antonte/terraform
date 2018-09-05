@@ -2,6 +2,7 @@
 #include "entity.hpp"
 #include "active_entity.hpp"
 #include "asm.hpp"
+#include "bot_specs.hpp"
 
 class Bot : public Entity, public ActiveEntity
 {
@@ -9,16 +10,14 @@ public:
   Bot(World &,
       float x,
       float y,
-      uint16_t maxEnergy,
-      uint16_t maxMatter,
-      int maxAge,
-      const Ram &ram = Program::Default.data());
+      const BotSpecs&);
   ~Bot();
   void draw() override;
   void tick() override;
   static const int Matter = 100;
   int getMatter() const override;
 private:
+  BotSpecs specs;
   static const int TakeEnergy = 10;
   enum class Addr {
     Move = 0xfff6,       // writing to this address makes bot to do something:
@@ -46,11 +45,8 @@ private:
   uint16_t energy = 250;
   uint16_t matter = 0;
   int age = 0;
-  uint16_t maxEnergy;
-  uint16_t maxMatter;
-  int maxAge;
+  static const uint16_t MaxMatter = 200;
   std::array<uint16_t, 32> reg; // reg[0] - ip
-  Ram ram;
   uint16_t getRam(uint16_t addr);
   void setRam(uint16_t addr, uint16_t value);
   enum class Move {

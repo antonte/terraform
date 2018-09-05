@@ -24,8 +24,8 @@ struct TerrainChunk
 class Terrain
 {
 public:
-  static const int Width = 1000;
-  static const int Height = 1000;
+  static const int Width = 5000;
+  static const int Height = 5000;
 
   Terrain(Library &);
   ~Terrain();

@@ -25,7 +25,7 @@ Tree::~Tree()
 
 void Tree::draw()
 {
-  auto age = 0.3f + 3.0f * (world->getNow() - dob) / ttl;
+  auto age = 0.3f + 3.0f * (world->getNow() - dob) / 360000;
   world->shad->use();
   world->mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y))) *
                glm::scale(glm::vec3(age, age, age));

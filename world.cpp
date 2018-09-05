@@ -4,6 +4,7 @@
 #include "bot.hpp"
 #include "bot_class.hpp"
 #include "entity.hpp"
+#include "screen.hpp"
 #include "stone.hpp"
 #include "stone_class.hpp"
 #include "terrain.hpp"
@@ -51,6 +52,7 @@ World::World(Library &lib)
     terrainShad(
       std::make_unique<ShaderProgram>("terrain", "terrain", mvp, proj, view, o2Level, h2OLevel)),
     buildShad(std::make_unique<ShaderProgram>("build", "build", mvp, proj, view)),
+    stoneShad(std::make_unique<ShaderProgram>("stone", "stone", proj, view)),
 
     o2PlantObj(std::make_unique<Obj>(lib, "o2_plant")),
     h2OPlantObj(std::make_unique<Obj>(lib, "h2o_plant")),
@@ -82,6 +84,7 @@ void World::draw(float camX, float camY, float camZ)
                      glm::vec3(camX, camY, 0.0f), // and looks at the origin
                      glm::vec3(0, 0, 1));
   terrain->draw(*this, minX, maxX, minY, maxY);
+  stoneMvps.clear();
   for (auto y = minY - 10; y < maxY + 10; y += 10)
     for (auto x = minX - 10; x < maxX + 10; x += 10)
     {
@@ -91,6 +94,15 @@ void World::draw(float camX, float camY, float camZ)
       for (auto &&ent : it->second)
         ent->draw();
     }
+
+  {
+    stoneShad->use();
+    ArrayBuffer mvpsAb(stoneMvps, 3);
+    mvpsAb.activate();
+    glVertexAttribDivisor(3, 1);
+    stoneClass->level[0]->drawInstanced(stoneMvps.size());
+  }
+
   // draw water
   mvp = glm::translate(glm::vec3(0.0f, 0.0f, (getH2OLevel() * 10.0f - 15.0f)));
   time = SDL_GetTicks();
@@ -125,6 +137,7 @@ float World::getTreeLevel() const
 
 void World::tick()
 {
+  money += getIncome() / 100;
   realO2Level += o2Rate;
   o2Level = realO2Level / 100000000.0f;
   realH2OLevel += h2ORate;
@@ -207,4 +220,9 @@ const Bot *World::getFirstBot() const
 bool World::isAlive(const Entity &ent) const
 {
   return entities.find(&ent) != std::end(entities);
+}
+
+int64_t World::getIncome() const
+{
+  return (realO2Level + realH2OLevel + treesNum) / 3ll;
 }

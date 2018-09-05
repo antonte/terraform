@@ -41,14 +41,14 @@ public:
   int getNow() const;
   const Bot *getFirstBot() const;
   bool isAlive(const Entity&) const;
-
-  static const int ScreenWidth = 1280;
-  static const int ScreenHeight = 720;
+  int64_t getIncome() const;
 
   Sched sched;
   std::unique_ptr<BotClass> botClass;
   std::unique_ptr<StoneClass> stoneClass;
   std::unique_ptr<Terrain> terrain;
+
+  std::vector<glm::vec3> stoneMvps;
 
 private:
   Var<float> o2Level;
@@ -64,6 +64,7 @@ public:
   std::unique_ptr<ShaderProgram> botShad;
   std::unique_ptr<ShaderProgram> terrainShad;
   std::unique_ptr<ShaderProgram> buildShad;
+  std::unique_ptr<ShaderProgram> stoneShad;
 
   std::unique_ptr<Obj> o2PlantObj;
   std::unique_ptr<Obj> h2OPlantObj;
@@ -72,10 +73,11 @@ public:
   int o2Rate = 0;
   int h2ORate = 0;
   int treesNum = 0;
+  int64_t money = 1'000'000'000;
 
 private:
-  int realO2Level = 0;
-  int realH2OLevel = 0;
+  int64_t realO2Level = 0;
+  int64_t realH2OLevel = 0;
   std::unordered_map<const Entity *, std::unique_ptr<Entity>> entities;
   std::unordered_map<uint32_t, std::unordered_set<Entity *>> grid;
   std::unordered_set<ActiveEntity *> active;

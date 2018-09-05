@@ -27,19 +27,8 @@ COEFF(BuildTime, 1000.0f);
 
 int Bot::lastId = 0;
 
-Bot::Bot(World &world,
-         float x,
-         float y,
-         uint16_t aMaxEnergy,
-         uint16_t aMaxMatter,
-         int aMaxAge,
-         const Ram &aRam)
-  : Entity(world, x, y),
-    id(lastId++),
-    maxEnergy(aMaxEnergy),
-    maxMatter(aMaxMatter),
-    maxAge(aMaxAge),
-    ram(aRam)
+Bot::Bot(World &world, float x, float y, const BotSpecs &aSpecs)
+  : Entity(world, x, y), specs(aSpecs), id(lastId++)
 {
   for (auto &r: reg)
     r = 0;
@@ -57,8 +46,8 @@ void Bot::draw()
 {
   world->mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y))) *
         glm::rotate(direction, glm::vec3(0.0f, 0.0f, 1.0f));
-  world->botClass->energy = 1.0 * energy / maxEnergy;
-  world->botClass->matter = 1.0 * matter / maxMatter;
+  world->botClass->energy = 1.0 * energy / specs.batteryCapacity;
+  world->botClass->matter = 1.0 * matter / MaxMatter;
   world->botShad->use();
 
   auto getBuildingObjMvp = [this]() {
@@ -164,9 +153,9 @@ static float sign(float val)
 void Bot::tick()
 {
   if (rand() % 40000 == 0)
-    ram[rand() % RamSize] = rand() % 0x10000; // make bot code mutate
+    specs.ram[rand() % RamSize] = rand() % 0x10000; // make bot code mutate
   ++age;
-  if (age > maxAge)
+  if (age > specs.maxAge)
     world->kill(*this);
 
   botCrowdMeter *= 0.9999f;
@@ -187,7 +176,7 @@ void Bot::tick()
   switch (move)
   {
   case Move::Stop:
-    energy = std::min(energy + BotChargeRate, static_cast<int>(maxEnergy));
+    energy = std::min(energy + BotChargeRate, static_cast<int>(specs.batteryCapacity));
     break;
   case Move::Frwd:
     if (energy < 1)
@@ -222,7 +211,7 @@ void Bot::tick()
     move = Move::Stop;
     if (energy < TakeEnergy)
       break;
-    if (matter + Stone::Matter > maxMatter)
+    if (matter + Stone::Matter > MaxMatter)
       break;
     Entity *clEnt = nullptr;
     float minDist;
@@ -260,13 +249,8 @@ void Bot::tick()
       break;
     energy -= BuildEnergy;
     matter -= Bot::Matter;
-    world->add(std::make_unique<Bot>(*world,
-                                     x + SpawnDistance * cos(direction),
-                                     y + SpawnDistance * sin(direction),
-                                     maxEnergy,
-                                     maxMatter,
-                                     maxAge,
-                                     ram));
+    world->add(std::make_unique<Bot>(
+      *world, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction), specs));
     break;
   case Move::BuildO2Plant:
     move = Move::Stop;
@@ -484,7 +468,7 @@ std::string Bot::opCodeToString(uint16_t opCode)
 uint16_t Bot::getRam(uint16_t addr)
 {
   if (addr < RamSize)
-    return ram[addr];
+    return specs.ram[addr];
   switch (static_cast<Addr>(addr))
   {
   case Addr::Move: return static_cast<uint16_t>(move);
@@ -534,8 +518,8 @@ uint16_t Bot::getRam(uint16_t addr)
   case Addr::O2Level: return world->getO2Level() * 100;
   case Addr::H2OLevel: return world->getH2OLevel() * 100;
   case Addr::TreeLevel: return world->getTreeLevel() * 100;
-  case Addr::Matter: return 100 * matter / maxMatter;
-  case Addr::Energy: return 100 * energy / maxEnergy;
+  case Addr::Matter: return 100 * matter / MaxMatter;
+  case Addr::Energy: return 100 * energy / specs.batteryCapacity;
   }
   return 0;
 }
@@ -544,7 +528,7 @@ void Bot::setRam(uint16_t addr, uint16_t value)
 {
   if (addr < RamSize)
   {
-    ram[addr] = value;
+    specs.ram[addr] = value;
     return;
   }
   switch (static_cast<Addr>(addr))

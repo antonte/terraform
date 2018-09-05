@@ -7,7 +7,7 @@ class Stone : public Entity
 {
 public:
   Stone(World&, float x, float y);
-  void draw() override;
+  void draw() override final;
   int getMatter() const override;
   static const int Matter = 10;
 

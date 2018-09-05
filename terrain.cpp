@@ -78,15 +78,16 @@ TerrainChunk Terrain::generateChunk(int xx, int yy) const
   const auto Sz = TerrainChunk::ChunkSize;
   auto x1 = (xx + Terrain::Width / 2) / Sz * Sz - Terrain::Width / 2;
   auto y1 = (yy + Terrain::Height / 2) / Sz * Sz - Terrain::Height / 2;
-  for (int y = y1; y < y1 + Sz; ++y)
-    for (int x = x1; x < x1 + Sz; ++x)
+  const auto GridSz = 2.0f;
+  for (float y = y1; y < y1 + Sz; y += GridSz)
+    for (float x = x1; x < x1 + Sz; x += GridSz)
     {
       {
         auto p1 = glm::vec3(x, y, getZ(x, y));
         tmpVertices.push_back(p1);
-        auto p2 = glm::vec3(x + 1, y, getZ(x + 1, y));
+        auto p2 = glm::vec3(x + GridSz, y, getZ(x + GridSz, y));
         tmpVertices.push_back(p2);
-        auto p3 = glm::vec3(x, y + 1, getZ(x, y + 1));
+        auto p3 = glm::vec3(x, y + GridSz, getZ(x, y + GridSz));
         tmpVertices.push_back(p3);
         auto n = glm::triangleNormal(p1, p2, p3);
         tmpNormals.push_back(n);
@@ -99,9 +100,9 @@ TerrainChunk Terrain::generateChunk(int xx, int yy) const
       {
         auto p1 = glm::vec3(x, y, getZ(x, y));
         tmpVertices.push_back(p1);
-        auto p2 = glm::vec3(x, y + 1, getZ(x, y + 1));
+        auto p2 = glm::vec3(x, y + GridSz, getZ(x, y + GridSz));
         tmpVertices.push_back(p2);
-        auto p3 = glm::vec3(x - 1, y + 1, getZ(x - 1, y + 1));
+        auto p3 = glm::vec3(x - GridSz, y + GridSz, getZ(x - GridSz, y + GridSz));
         tmpVertices.push_back(p3);
         auto n = glm::triangleNormal(p1, p2, p3);
         tmpNormals.push_back(n);
