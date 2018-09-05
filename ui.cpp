@@ -4,7 +4,7 @@
 bool Ui::onMouseDown(int x, int y)
 {
   for (auto &&w : widgets)
-    if (w->OnMouseDown(x, y))
+    if (w->onMouseDown(x, y))
       return true;
   return false;
 }
@@ -12,7 +12,7 @@ bool Ui::onMouseDown(int x, int y)
 bool Ui::onMouseUp(int x, int y)
 {
   for (auto &&w : widgets)
-    if (w->OnMouseUp(x, y))
+    if (w->onMouseUp(x, y))
       return true;
   return false;
 }

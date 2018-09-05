@@ -1,5 +1,7 @@
 #include "tree.hpp"
 
+#include "pi.hpp"
+#include "rend.hpp"
 #include "terrain.hpp"
 #include "world.hpp"
 #include <shade/obj.hpp>
@@ -23,14 +25,14 @@ Tree::~Tree()
   --world->treesNum;
 }
 
-void Tree::draw()
+void Tree::draw(Rend &rend)
 {
   auto age = 0.3f + 3.0f * (world->getNow() - dob) / 360000;
-  world->shad->use();
-  world->mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y))) *
+  rend.shad->use();
+  rend.mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y))) *
                glm::scale(glm::vec3(age, age, age));
-  world->mvp.update();
-  world->treeObj->draw();
+  rend.mvp.update();
+  rend.treeObj->draw();
 }
 
 int Tree::getMatter() const
@@ -51,9 +53,8 @@ void Tree::tryToReproduce()
       (100 * world->getO2Level() * world->getH2OLevel()))
   {
     auto dir = rand() % 360;
-    world->add(std::make_unique<Tree>(*world,
-                                      x + 20 * cos(dir * 2.0f * 3.1415926f / 360.0f),
-                                      y + 20 * sin(dir * 2.0f * 3.1415926f / 360.0f)));
+    world->add<Tree>(x + 20 * cos(dir * 2.0f * PI / 360.0f),
+                     y + 20 * sin(dir * 2.0f * PI / 360.0f));
   }
   unSched = world->sched.schedWithUnSched([this]() { tryToReproduce(); }, rand() % 900 + 100);
 }

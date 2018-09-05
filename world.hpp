@@ -1,21 +1,16 @@
 #pragma once
 #include "sched.hpp"
 #include <memory>
-#include <shade/var.hpp>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-class Bot;
-class BotClass;
-class Entity;
 class ActiveEntity;
+class Entity;
 class Library;
-class ShaderProgram;
-class StoneClass;
+class Rend;
 class Terrain;
-class Obj;
-class ArrayBuffer;
 
 namespace sdl
 {
@@ -28,9 +23,8 @@ public:
   World(Library &);
   ~World();
 
-  void draw(float camX, float camY, float camZ);
+  void draw(Rend &, float camX, float camY, float camZ);
   void tick();
-  Entity *add(std::unique_ptr<Entity> &&);
   float getO2Level() const;
   float getH2OLevel() const;
   float getTreeLevel() const;
@@ -39,49 +33,31 @@ public:
   void remove(Entity &);
   void kill(Entity &);
   int getNow() const;
-  const Bot *getFirstBot() const;
-  bool isAlive(const Entity&) const;
+  bool isAlive(const Entity &) const;
   int64_t getIncome() const;
 
+  template <typename T, typename... Args>
+  Entity *add(Args &&... args)
+  {
+    return internalAdd(std::make_unique<T>(*this, std::forward<Args>(args)...));
+  }
+
   Sched sched;
-  std::unique_ptr<BotClass> botClass;
-  std::unique_ptr<StoneClass> stoneClass;
   std::unique_ptr<Terrain> terrain;
 
-  std::vector<glm::vec3> stoneMvps;
-
-private:
-  Var<float> o2Level;
-  Var<float> h2OLevel;
-  Var<float> time;
-  Var<glm::mat4> proj;
-  Var<glm::mat4> view;
-
 public:
-  Var<glm::mat4> mvp;
-
-  std::unique_ptr<ShaderProgram> shad;
-  std::unique_ptr<ShaderProgram> botShad;
-  std::unique_ptr<ShaderProgram> terrainShad;
-  std::unique_ptr<ShaderProgram> buildShad;
-  std::unique_ptr<ShaderProgram> stoneShad;
-
-  std::unique_ptr<Obj> o2PlantObj;
-  std::unique_ptr<Obj> h2OPlantObj;
-  std::unique_ptr<Obj> treeObj;
   int botsNum = 0;
   int o2Rate = 0;
   int h2ORate = 0;
   int treesNum = 0;
-  int64_t money = 1'000'000'000;
+  int64_t money = 1000000000;
 
 private:
+  Entity *internalAdd(std::unique_ptr<Entity> &&ent);
   int64_t realO2Level = 0;
   int64_t realH2OLevel = 0;
   std::unordered_map<const Entity *, std::unique_ptr<Entity>> entities;
   std::unordered_map<uint32_t, std::unordered_set<Entity *>> grid;
   std::unordered_set<ActiveEntity *> active;
-  std::unique_ptr<ArrayBuffer> waterMesh;
-  std::unique_ptr<ShaderProgram> waterShad;
   int now = 0;
 };

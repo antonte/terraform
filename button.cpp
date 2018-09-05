@@ -2,7 +2,7 @@
 
 Button::Button(int x, int y, int w, int h) : Widget(x, y, w, h) {}
 
-bool Button::OnMouseDown(int mouseX, int mouseY)
+bool Button::onMouseDown(int mouseX, int mouseY)
 {
   if (mouseX < x || mouseX >= x + w || mouseY < y || mouseY >= y + h)
     return false;
@@ -10,7 +10,7 @@ bool Button::OnMouseDown(int mouseX, int mouseY)
   return true;
 }
 
-bool Button::OnMouseUp(int mouseX, int mouseY)
+bool Button::onMouseUp(int mouseX, int mouseY)
 {
   if (!pressed)
     return false;

@@ -1,12 +1,14 @@
 #include "terrain.hpp"
 
+#include "pi.hpp"
+#include "rend.hpp"
 #include "world.hpp"
+#include <coeff/coefficient_registry.hpp>
 #include <log/log.hpp>
 #include <sdlpp/sdlpp.hpp>
 #include <shade/array_buffer.hpp>
 #include <shade/library.hpp>
 #include <shade/shader_program.hpp>
-#include <coeff/coefficient_registry.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/normal.hpp>
@@ -38,16 +40,16 @@ static int getChunkIdx(int x, int y)
            (Terrain::Width / TerrainChunk::ChunkSize);
 }
 
-void Terrain::draw(World &world,
+void Terrain::draw(Rend &rend,
                    int minX,
                    int maxX,
                    int minY,
                    int maxY)
 {
-  world.terrainShad->use();
-  world.mvp = glm::translate(glm::vec3(0.0f, 0.0, 0.0f)) *
-               glm::rotate(-3.1415926f / 2, glm::vec3(1.0f, 0.0f, 0.0f));
-  world.mvp.update();
+  rend.terrainShad->use();
+  rend.mvp = glm::translate(glm::vec3(0.0f, 0.0, 0.0f)) *
+               glm::rotate(-PI / 2, glm::vec3(1.0f, 0.0f, 0.0f));
+  rend.mvp.update();
   terrainTex->glBind(nullptr, nullptr);
 
   const auto Sz = TerrainChunk::ChunkSize;

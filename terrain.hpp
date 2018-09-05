@@ -5,8 +5,9 @@
 #include <unordered_map>
 #include <vector>
 
-class Library;
 class ArrayBuffer;
+class Library;
+class Rend;
 class World;
 namespace sdl
 {
@@ -30,7 +31,7 @@ public:
   Terrain(Library &);
   ~Terrain();
   static float getZ(float x, float y);
-  void draw(World &,
+  void draw(Rend &,
             int minX,
             int maxX,
             int minY,

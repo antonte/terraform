@@ -1,5 +1,6 @@
 #include "h2o_plant.hpp"
 
+#include "rend.hpp"
 #include "terrain.hpp"
 #include "world.hpp"
 #include <shade/obj.hpp>
@@ -19,12 +20,12 @@ H2OPlant::~H2OPlant()
   --world->h2ORate;
 }
 
-void H2OPlant::draw()
+void H2OPlant::draw(Rend &rend)
 {
-  world->shad->use();
-  world->mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y)));
-  world->mvp.update();
-  world->h2OPlantObj->draw();
+  rend.shad->use();
+  rend.mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y)));
+  rend.mvp.update();
+  rend.h2OPlantObj->draw();
 }
 
 int H2OPlant::getMatter() const

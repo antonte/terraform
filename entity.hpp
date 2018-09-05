@@ -3,6 +3,7 @@
 #include <shade/var.hpp>
 
 class World;
+class Rend;
 
 class Entity
 {
@@ -12,7 +13,7 @@ public:
   float getX() const;
   float getY() const;
   void setXY(float x, float y);
-  virtual void draw() = 0;
+  virtual void draw(Rend &) = 0;
   virtual int getMatter() const = 0;
 
 protected:

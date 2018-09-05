@@ -2,6 +2,8 @@
 #include "bot_class.hpp"
 #include "h2o_plant.hpp"
 #include "o2_plant.hpp"
+#include "pi.hpp"
+#include "rend.hpp"
 #include "stone.hpp"
 #include "terrain.hpp"
 #include "tree.hpp"
@@ -40,24 +42,24 @@ Bot::~Bot()
   --world->botsNum;
 }
 
-void Bot::draw()
+void Bot::draw(Rend &rend)
 {
-  world->mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y))) *
+  rend.mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y))) *
         glm::rotate(direction, glm::vec3(0.0f, 0.0f, 1.0f));
-  world->botClass->energy = 1.0 * energy / specs.batteryCapacity;
-  world->botClass->matter = 1.0 * matter / MaxMatter;
-  world->botShad->use();
+  rend.botClass->energy = 1.0 * energy / specs.batteryCapacity;
+  rend.botClass->matter = 1.0 * matter / MaxMatter;
+  rend.botShad->use();
 
   auto getBuildingObjMvp = [this]() {
     return glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y) + 10)) *
-           glm::rotate(direction - 3.1415926f / 4.0f, glm::vec3(0.0f, 0.0f, 1.0f)) *
+           glm::rotate(direction - PI / 4.0f, glm::vec3(0.0f, 0.0f, 1.0f)) *
            glm::translate(glm::vec3(SpawnDistance, SpawnDistance, 0.0f)) *
            glm::rotate(SDL_GetTicks() * 0.001f, glm::vec3(0.0f, 0.0f, 1.0f));
   };
 
   if (energy < BotChargeRate + 1)
   {
-    auto &&anim = world->botClass->idleAnim;
+    auto &&anim = rend.botClass->idleAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
     return;
   }
@@ -65,76 +67,76 @@ void Bot::draw()
   {
   case Move::Stop:
   {
-    auto &&anim = world->botClass->idleAnim;
+    auto &&anim = rend.botClass->idleAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
     break;
   }
   case Move::Frwd:
   {
-    auto &&anim = world->botClass->walkAnim;
+    auto &&anim = rend.botClass->walkAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
   }
   break;
   case Move::Right:
   {
-    auto &&anim = world->botClass->walkAnim;
+    auto &&anim = rend.botClass->walkAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
   }
   break;
   case Move::Bckwd:
   {
-    auto &&anim = world->botClass->walkAnim;
+    auto &&anim = rend.botClass->walkAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
   }
   break;
   case Move::Left:
   {
-    auto &&anim = world->botClass->walkAnim;
+    auto &&anim = rend.botClass->walkAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
   }
   break;
   case Move::Take:
   {
-    auto &&anim = world->botClass->busyAnim;
+    auto &&anim = rend.botClass->busyAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
   }
   break;
   case Move::BuildBot:
   {
-    auto &&anim = world->botClass->busyAnim;
+    auto &&anim = rend.botClass->busyAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
 
-    world->mvp = getBuildingObjMvp();
-    world->buildShad->use();
-    auto &&buildAnim = world->botClass->idleAnim;
+    rend.mvp = getBuildingObjMvp();
+    rend.buildShad->use();
+    auto &&buildAnim = rend.botClass->idleAnim;
     buildAnim[SDL_GetTicks() * 30 / 1000 % buildAnim.size()]->draw();
   }
   break;
   case Move::BuildO2Plant:
   {
-    auto &&anim = world->botClass->busyAnim;
+    auto &&anim = rend.botClass->busyAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
-    world->mvp = getBuildingObjMvp();
-    world->buildShad->use();
-    world->o2PlantObj->draw();
+    rend.mvp = getBuildingObjMvp();
+    rend.buildShad->use();
+    rend.o2PlantObj->draw();
   }
   break;
   case Move::BuildH2OPlant:
   {
-    auto &&anim = world->botClass->busyAnim;
+    auto &&anim = rend.botClass->busyAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
-    world->mvp = getBuildingObjMvp();
-    world->buildShad->use();
-    world->h2OPlantObj->draw();
+    rend.mvp = getBuildingObjMvp();
+    rend.buildShad->use();
+    rend.h2OPlantObj->draw();
   }
   break;
   case Move::PlantTree:
   {
-    auto &&anim = world->botClass->busyAnim;
+    auto &&anim = rend.botClass->busyAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
-    world->mvp = getBuildingObjMvp();
-    world->buildShad->use();
-    world->treeObj->draw();
+    rend.mvp = getBuildingObjMvp();
+    rend.buildShad->use();
+    rend.treeObj->draw();
   }
   break;
   }
@@ -187,8 +189,8 @@ void Bot::tick()
       break;
     energy -= 1;
     direction -= BotRotationSpeed;
-    if (direction < -3.1415926f)
-      direction += 2 * 3.1415926f;
+    if (direction < -PI)
+      direction += 2 * PI;
     break;
   case Move::Bckwd:
     if (energy < 1)
@@ -201,8 +203,8 @@ void Bot::tick()
       break;
     energy -= 1;
     direction += BotRotationSpeed;
-    if (direction > 3.1415926f)
-      direction -= 2 * 3.1415926f;
+    if (direction > PI)
+      direction -= 2 * PI;
     break;
   case Move::Take:
   {
@@ -247,8 +249,7 @@ void Bot::tick()
       break;
     energy -= BuildEnergy;
     matter -= Bot::Matter;
-    world->add(std::make_unique<Bot>(
-      *world, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction), specs));
+    world->add<Bot>(x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction), specs);
     break;
   case Move::BuildO2Plant:
     move = Move::Stop;
@@ -261,8 +262,8 @@ void Bot::tick()
       break;
     energy -= BuildEnergy;
     matter -= Bot::Matter;
-    world->add(std::make_unique<O2Plant>(
-      *world, 12000, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
+    world->add<O2Plant>(
+      12000, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction));
     break;
   case Move::BuildH2OPlant:
     move = Move::Stop;
@@ -275,8 +276,8 @@ void Bot::tick()
       break;
     energy -= BuildEnergy;
     matter -= Bot::Matter;
-    world->add(std::make_unique<H2OPlant>(
-      *world, 12000, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
+    world->add<H2OPlant>(
+      12000, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction));
     break;
   case Move::PlantTree:
     move = Move::Stop;
@@ -289,8 +290,7 @@ void Bot::tick()
       break;
     energy -= BuildEnergy;
     matter -= Bot::Matter;
-    world->add(std::make_unique<Tree>(
-      *world, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction)));
+    world->add<Tree>(x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction));
     break;
   }
 
@@ -501,11 +501,11 @@ uint16_t Bot::getRam(uint16_t addr)
       if (minDist < 0.5f)
         return static_cast<uint16_t>(Move::Take);
       auto ang = atan2(clEnt->getY() - y, clEnt->getX() - x) - direction;
-      if (ang > 3.1415926f)
-        ang -= 2.0f * 3.1415926f;
-      if (ang < -3.1415926f)
-        ang += 2.0f * 3.1415926f;
-      if (abs(ang) < 3.1415926f / 8.0f)
+      if (ang > PI)
+        ang -= 2.0f * PI;
+      if (ang < -PI)
+        ang += 2.0f * PI;
+      if (abs(ang) < PI / 8.0f)
         return static_cast<uint16_t>(Move::Frwd);
       if (ang < 0)
         return static_cast<uint16_t>(Move::Right);

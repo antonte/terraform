@@ -2,6 +2,7 @@
 
 #include "world.hpp"
 #include "terrain.hpp"
+#include "rend.hpp"
 #include <shade/obj.hpp>
 #include <shade/shader_program.hpp>
 
@@ -19,12 +20,12 @@ O2Plant::~O2Plant()
   --world->o2Rate;
 }
 
-void O2Plant::draw()
+void O2Plant::draw(Rend &rend)
 {
-  world->shad->use();
-  world->mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y)));
-  world->mvp.update();
-  world->o2PlantObj->draw();
+  rend.shad->use();
+  rend.mvp = glm::translate(glm::vec3(x, y, world->terrain->getZ(x, y)));
+  rend.mvp.update();
+  rend.o2PlantObj->draw();
 }
 
 int O2Plant::getMatter() const

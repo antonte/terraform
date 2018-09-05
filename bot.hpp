@@ -12,7 +12,7 @@ public:
       float y,
       const BotSpecs&);
   ~Bot();
-  void draw() override;
+  void draw(Rend &) override;
   void tick() override;
   static const int Matter = 100;
   int getMatter() const override;

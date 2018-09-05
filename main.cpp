@@ -1,6 +1,8 @@
 #include "bot.hpp"
 #include "bot_class.hpp"
 #include "button.hpp"
+#include "inst.hpp"
+#include "rend.hpp"
 #include "screen.hpp"
 #include "stone.hpp"
 #include "terrain.hpp"
@@ -49,7 +51,7 @@ int main()
   auto camZ = 180.0f;
   Library lib(rend.get());
 
-  World world(lib);
+  Inst inst(lib);
   for (auto i = 0; i < 100000;)
   {
     auto x = rand() % (Terrain::Width * 10) / 10.0f - Terrain::Width / 2;
@@ -57,7 +59,7 @@ int main()
     auto p = Terrain::getZ(x, y) + 20;
     if (rand() % 40 < p)
     {
-      world.add(std::make_unique<Stone>(world, x, y));
+      inst.world->add<Stone>(x, y);
       ++i;
     }
   }
@@ -123,22 +125,24 @@ int main()
     };
 
   Button botBtn(ScreenWidth / 2 - 30, ScreenHeight - 60.0f - 100, 60, 100);
-  botBtn.onDraw = [&mvp, &world](bool pressed) {
+  botBtn.onDraw = [&mvp, &inst](bool pressed) {
     mvp = glm::translate(glm::vec3(ScreenWidth / 2, ScreenHeight - 60.0f, 0.0f)) *
           glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
     mvp.update();
-    world.botClass->idleAnim[SDL_GetTicks() * 30 / 1000 % world.botClass->idleAnim.size()]->draw();
+    inst.rend->botClass
+      ->idleAnim[SDL_GetTicks() * 30 / 1000 % inst.rend->botClass->idleAnim.size()]
+      ->draw();
   };
-  botBtn.onClick = [&camX, &camY, &world]() {
-    if (world.money < 100'000'000)
+  botBtn.onClick = [&camX, &camY, &inst]() {
+    if (inst.world->money < 100'000'000)
       return;
     BotSpecs specs;
     specs.maxAge = 20000;
     specs.batteryCapacity = 2000;
     specs.ram = Program::Default.data();
-    world.money -= 100'000'000;
-    world.add(std::make_unique<Bot>(
-      world, camX + rand() % 200 / 10.f - 10.0f, camY + rand() % 200 / 10.f - 10.0f, specs));
+    inst.world->money -= 100'000'000;
+    inst.world->add<Bot>(
+      camX + rand() % 200 / 10.f - 10.0f, camY + rand() % 200 / 10.f - 10.0f, specs);
   };
 
   ui.add(botBtn);
@@ -183,7 +187,7 @@ int main()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    world.draw(camX, camY, camZ);
+    inst.world->draw(*inst.rend, camX, camY, camZ);
 
     ++frames;
     if (SDL_GetTicks() > nextMeasure)
@@ -199,11 +203,6 @@ int main()
     uiShad.use();
 
     ui.draw();
-
-    mvp = glm::translate(glm::vec3(ScreenWidth - 30.0f, ScreenHeight - 60.0f, 0.0f)) *
-          glm::scale(glm::vec3(20.0f, 20.0f, 20.0f));
-    mvp.update();
-    menu->draw();
 
     glDisable(GL_DEPTH_TEST);
     color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -223,7 +222,7 @@ int main()
       mvp.update();
       std::ostringstream stats;
       stats << std::fixed
-            << 100.0f * (world.getO2Level() + world.getH2OLevel() + world.getTreeLevel()) / 3.0f
+            << 100.0f * (inst.world->getO2Level() + inst.world->getH2OLevel() + inst.world->getTreeLevel()) / 3.0f
             << "%";
       text.setText(stats.str());
       text.draw();
@@ -234,8 +233,8 @@ int main()
             glm::scale(glm::vec3(30.0f, 30.0f, 30.0f));
       mvp.update();
       std::ostringstream stats;
-      stats << "$" << std::fixed << world.money << "\n" //
-            << "$" << std::fixed << world.getIncome() << "/sec";
+      stats << "$" << std::fixed << inst.world->money << "\n" //
+            << "$" << std::fixed << inst.world->getIncome() << "/sec";
       text.setText(stats.str());
       text.draw();
     }
@@ -245,7 +244,7 @@ int main()
     auto currentTick = SDL_GetTicks();
     while (currentTick > tickTime)
     {
-      world.tick();
+      inst.world->tick();
       tickTime += 10;
       camVX = (1.0f - CamInertia) * camVX + CamInertia * (camX - camPrevX);
       camVY = (1.0f - CamInertia) * camVY + CamInertia * (camY - camPrevY);

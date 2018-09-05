@@ -7,7 +7,7 @@ class Tree : public Entity
 public:
   Tree(World &, float x, float y);
   ~Tree();
-  void draw() override;
+  void draw(Rend &) override;
   static const int Matter = 100;
   int getMatter() const override;
 

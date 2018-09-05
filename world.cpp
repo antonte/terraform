@@ -4,6 +4,8 @@
 #include "bot.hpp"
 #include "bot_class.hpp"
 #include "entity.hpp"
+#include "pi.hpp"
+#include "rend.hpp"
 #include "screen.hpp"
 #include "stone.hpp"
 #include "stone_class.hpp"
@@ -15,52 +17,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
-static std::vector<glm::vec3> getWaterMesh()
-{
-  std::vector<glm::vec3> res;
-  res.push_back(glm::vec3(-1.0f * Terrain::Width / 2.0f, -1.0f * Terrain::Height / 2.0f, 0.0f));
-  res.push_back(glm::vec3(1.0f * Terrain::Width / 2.0f, 1.0f * Terrain::Height / 2.0f, 0.0f));
-  res.push_back(glm::vec3(1.0f * Terrain::Width / 2.0f, -1.0f * Terrain::Height / 2.0f, 0.0f));
-
-  res.push_back(glm::vec3(-1.0f * Terrain::Width / 2.0f, -1.0f * Terrain::Height / 2.0f, 0.0f));
-  res.push_back(glm::vec3(-1.0f * Terrain::Width / 2.0f, 1.0f * Terrain::Height / 2.0f, 0.0f));
-  res.push_back(glm::vec3(1.0f * Terrain::Width / 2.0f, 1.0f * Terrain::Height / 2.0f, 0.0f));
-  return res;
-}
-
-World::World(Library &lib)
-  : botClass(std::make_unique<BotClass>(lib)),
-    stoneClass(std::make_unique<StoneClass>(lib)),
-    terrain(std::make_unique<Terrain>(lib)),
-
-    o2Level("o2Level", 0.0f),
-    h2OLevel("h2OLevel", 0.0f),
-    time("time"),
-    proj("proj",
-         glm::perspective(glm::radians(45.0f), 1.0f * ScreenWidth / ScreenHeight, 0.1f, 1000.0f)),
-    view("view"),
-    mvp("mvp"),
-    
-    shad(std::make_unique<ShaderProgram>("shad", "shad", mvp, proj, view)),
-    botShad(std::make_unique<ShaderProgram>("bot",
-                                            "bot",
-                                            mvp,
-                                            proj,
-                                            view,
-                                            botClass->energy,
-                                            botClass->matter)),
-    terrainShad(
-      std::make_unique<ShaderProgram>("terrain", "terrain", mvp, proj, view, o2Level, h2OLevel)),
-    buildShad(std::make_unique<ShaderProgram>("build", "build", mvp, proj, view)),
-    stoneShad(std::make_unique<ShaderProgram>("stone", "stone", proj, view)),
-
-    o2PlantObj(std::make_unique<Obj>(lib, "o2_plant")),
-    h2OPlantObj(std::make_unique<Obj>(lib, "h2o_plant")),
-    treeObj(std::make_unique<Obj>(lib, "tree")),
-    waterMesh(std::make_unique<ArrayBuffer>(getWaterMesh(), 0)),
-    waterShad(std::make_unique<ShaderProgram>("water", "water", mvp, proj, view, h2OLevel, time))
-{
-}
+World::World(Library &lib) : terrain(std::make_unique<Terrain>(lib)) {}
 
 World::~World() {}
 
@@ -73,18 +30,20 @@ COEFF(MapXK, 0.1f);
 COEFF(MapYK, 0.1f);
 COEFF(MapYBalance, 50);
 
-void World::draw(float camX, float camY, float camZ)
+void World::draw(Rend &rend, float camX, float camY, float camZ)
 {
+  rend.o2Level = getO2Level();
+  rend.h2OLevel = getH2OLevel();
   int minX = camX - camZ * MapXK;
   int maxX = camX + camZ * MapXK;
   int minY = camY - camZ * MapYK * MapYBalance / 100;
   int maxY = camY + camZ * MapYK;
 
-  view = glm::lookAt(glm::vec3(camX, camY - camZ, camZ),
+  rend.view = glm::lookAt(glm::vec3(camX, camY - camZ, camZ),
                      glm::vec3(camX, camY, 0.0f), // and looks at the origin
                      glm::vec3(0, 0, 1));
-  terrain->draw(*this, minX, maxX, minY, maxY);
-  stoneMvps.clear();
+  terrain->draw(rend, minX, maxX, minY, maxY);
+  rend.stoneMvps.clear();
   for (auto y = minY - 10; y < maxY + 10; y += 10)
     for (auto x = minX - 10; x < maxX + 10; x += 10)
     {
@@ -92,26 +51,26 @@ void World::draw(float camX, float camY, float camZ)
       if (it == std::end(grid))
         continue;
       for (auto &&ent : it->second)
-        ent->draw();
+        ent->draw(rend);
     }
 
   {
-    stoneShad->use();
-    ArrayBuffer mvpsAb(stoneMvps, 3);
+    rend.stoneShad->use();
+    ArrayBuffer mvpsAb(rend.stoneMvps, 3);
     mvpsAb.activate();
     glVertexAttribDivisor(3, 1);
-    stoneClass->level[0]->drawInstanced(stoneMvps.size());
+    rend.stoneClass->level[0]->drawInstanced(rend.stoneMvps.size());
   }
 
   // draw water
-  mvp = glm::translate(glm::vec3(0.0f, 0.0f, (getH2OLevel() * 10.0f - 15.0f)));
-  time = SDL_GetTicks();
-  waterShad->use();
-  waterMesh->activate();
+  rend.mvp = glm::translate(glm::vec3(0.0f, 0.0f, (getH2OLevel() * 10.0f - 15.0f)));
+  rend.time = SDL_GetTicks();
+  rend.waterShad->use();
+  rend.waterMesh->activate();
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-Entity *World::add(std::unique_ptr<Entity> &&ent)
+Entity *World::internalAdd(std::unique_ptr<Entity> &&ent)
 {
   auto entPtr = ent.get();
   grid[getGridIdx(entPtr->getX(), entPtr->getY())].insert(entPtr);
@@ -122,12 +81,12 @@ Entity *World::add(std::unique_ptr<Entity> &&ent)
 
 float World::getO2Level() const
 {
-  return o2Level.get();
+  return realO2Level / 100000000.0f;
 }
 
 float World::getH2OLevel() const
 {
-  return h2OLevel.get();
+  return realH2OLevel / 100000000.0f;
 }
 
 float World::getTreeLevel() const
@@ -139,9 +98,7 @@ void World::tick()
 {
   money += getIncome() / 100;
   realO2Level += o2Rate;
-  o2Level = realO2Level / 100000000.0f;
   realH2OLevel += h2ORate;
-  h2OLevel = realH2OLevel / 100000000.0f;
   for (auto &&ent : active)
     ent->tick();
 
@@ -195,9 +152,8 @@ void World::kill(Entity &ent)
   auto a = 0.0f;
   for (auto mat = ent.getMatter(); mat > 0;)
   {
-    auto st = add(std::make_unique<Stone>(*this,
-                                          2.0f * a * sin(a * 2 * 3.1415926f / 12.0f) + ent.getX(),
-                                          2.0f * a * cos(a * 2 * 3.1415926f / 12.0f) + ent.getY()));
+    auto st = add<Stone>(2.0f * a * sin(a * 2 * PI / 12.0f) + ent.getX(),
+                         2.0f * a * cos(a * 2 * PI / 12.0f) + ent.getY());
     mat -= st->getMatter();
     ++a;
   }
@@ -207,14 +163,6 @@ void World::kill(Entity &ent)
 int World::getNow() const
 {
   return now;
-}
-
-const Bot *World::getFirstBot() const
-{
-  for (auto &&ent : entities)
-    if (auto bot = dynamic_cast<const Bot *>(ent.first))
-      return bot;
-  return nullptr;
 }
 
 bool World::isAlive(const Entity &ent) const

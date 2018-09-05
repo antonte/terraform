@@ -2,12 +2,13 @@
 #include "entity.hpp"
 
 class World;
+class Rend;
 
 class Stone : public Entity
 {
 public:
   Stone(World&, float x, float y);
-  void draw() override final;
+  void draw(Rend&) override final;
   int getMatter() const override;
   static const int Matter = 10;
 

@@ -10,8 +10,8 @@ public:
   std::function<void(bool pressed)> onDraw;
 
 private:
-  bool OnMouseDown(int x, int y) override;
-  bool OnMouseUp(int x, int y) override;
+  bool onMouseDown(int x, int y) override;
+  bool onMouseUp(int x, int y) override;
   void draw() override;
   bool pressed = false;
 };
