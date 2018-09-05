@@ -33,8 +33,6 @@ Bot::Bot(World &world, float x, float y, const BotSpecs &aSpecs)
   for (auto &r: reg)
     r = 0;
   ++world.botsNum;
-  // for (auto i = 0; i < RamSize; ++i)
-  //   LOG(i, opCodeToString(ram[i]));
 }
 
 Bot::~Bot()

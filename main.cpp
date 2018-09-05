@@ -1,9 +1,11 @@
 #include "bot.hpp"
 #include "bot_class.hpp"
+#include "button.hpp"
 #include "screen.hpp"
 #include "stone.hpp"
 #include "terrain.hpp"
 #include "tree.hpp"
+#include "ui.hpp"
 #include "world.hpp"
 #include <coeff/coefficient_registry.hpp>
 #include <iomanip>
@@ -95,34 +97,39 @@ int main()
   ShaderProgram textShad("text", "text", proj, mvp, color);
   ShaderProgram uiShad("ui", "ui", proj, mvp);
 
-  Obj* lab = lib.getObj("lab");
-  Obj* planet = lib.getObj("planet");
   // Obj* cross = lib.getObj("cross");
-  Obj* menu = lib.getObj("menu");
-
   Text text(lib, "font");
   int fps = 0;
 
-  bool botPressed = false;
-
-  evHand.mouseButtonDown = [&botPressed, &mouseDown](const SDL_MouseButtonEvent &e) {
+  Ui ui;
+  evHand.mouseButtonDown = [&ui, &mouseDown](const SDL_MouseButtonEvent &e) {
     LOG("mouse button down", e.x, e.y);
     if (e.button != SDL_BUTTON_LEFT)
       return;
+    if (ui.onMouseDown(e.x, e.y))
+      return;
     mouseDown = true;
-    if (abs(e.x - ScreenWidth / 2) > 40 || abs(e.y - (ScreenHeight - 60)) > 40)
-      return;
-    botPressed = true;
   };
-  evHand.mouseButtonUp = [&botPressed, &world, &camX, &camY, &mouseDown](
-                           const SDL_MouseButtonEvent &e) {
-    botPressed = false;
-    LOG("mouse button up", e.x, e.y);
-    if (e.button != SDL_BUTTON_LEFT)
-      return;
-    mouseDown = false;
-    if (abs(e.x - ScreenWidth / 2) > 40 || abs(e.y - (ScreenHeight - 60)) > 40)
-      return;
+  evHand.mouseButtonUp =
+    [&ui, &mouseDown](const SDL_MouseButtonEvent &e) {
+      LOG("mouse button up", e.x, e.y);
+      if (e.button != SDL_BUTTON_LEFT)
+        return;
+      if (ui.onMouseUp(e.x, e.y))
+        return;
+      mouseDown = false;
+      if (abs(e.x - ScreenWidth / 2) > 40 || abs(e.y - (ScreenHeight - 60)) > 40)
+        return;
+    };
+
+  Button botBtn(ScreenWidth / 2 - 30, ScreenHeight - 60.0f - 100, 60, 100);
+  botBtn.onDraw = [&mvp, &world](bool pressed) {
+    mvp = glm::translate(glm::vec3(ScreenWidth / 2, ScreenHeight - 60.0f, 0.0f)) *
+          glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
+    mvp.update();
+    world.botClass->idleAnim[SDL_GetTicks() * 30 / 1000 % world.botClass->idleAnim.size()]->draw();
+  };
+  botBtn.onClick = [&camX, &camY, &world]() {
     if (world.money < 100'000'000)
       return;
     BotSpecs specs;
@@ -133,6 +140,40 @@ int main()
     world.add(std::make_unique<Bot>(
       world, camX + rand() % 200 / 10.f - 10.0f, camY + rand() % 200 / 10.f - 10.0f, specs));
   };
+
+  ui.add(botBtn);
+
+  Obj *planet = lib.getObj("planet");
+  Button planetBtn(30 - 20, 30 - 20, 40, 40);
+  planetBtn.onDraw = [&mvp, &planet](bool pressed) {
+    mvp = glm::translate(glm::vec3(30.0f, 30.0f, 1.0f)) *
+          glm::rotate(SDL_GetTicks() / 300.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
+          glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
+    mvp.update();
+    planet->draw();
+  };
+  ui.add(planetBtn);
+
+  Obj *lab = lib.getObj("lab");
+  Button labBtn(30 - 20, ScreenHeight - 60.0f - 20, 40, 40);
+  labBtn.onDraw = [&mvp, &lab](bool pressed) {
+    mvp = glm::translate(glm::vec3(30.0f, ScreenHeight - 60.0f, 1.0f)) *
+          glm::rotate(SDL_GetTicks() / 300.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
+          glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
+    mvp.update();
+    lab->draw();
+  };
+  ui.add(labBtn);
+
+  Obj *menu = lib.getObj("menu");
+  Button menuBtn(ScreenWidth - 30 - 20, ScreenHeight - 60.0f - 20, 40, 40);
+  menuBtn.onDraw = [&mvp, &menu](bool pressed) {
+    mvp = glm::translate(glm::vec3(ScreenWidth - 30.0f, ScreenHeight - 60.0f, 1.0f)) *
+          glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
+    mvp.update();
+    menu->draw();
+  };
+  ui.add(menuBtn);
 
   while (!done)
   {
@@ -154,24 +195,10 @@ int main()
     }
 
     // UI section
-
     proj = glm::ortho(0.0f, 1.0f * ScreenWidth, 1.0f * ScreenHeight, 0.0f, -1000.0f, 1000.0f);
     uiShad.use();
-    mvp = glm::translate(glm::vec3(ScreenWidth / 2, ScreenHeight - 60.0f, 0.0f)) *
-          glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (botPressed ? 1.3f : 1.0f));
-    mvp.update();
-    world.botClass->idleAnim[SDL_GetTicks() * 30 / 1000 % world.botClass->idleAnim.size()]->draw();
-    mvp = glm::translate(glm::vec3(30.0f, 30.0f, 1.0f)) *
-          glm::rotate(SDL_GetTicks() / 300.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
-          glm::scale(glm::vec3(20.0f, 20.0f, 20.0f));
-    mvp.update();
-    planet->draw();
 
-    mvp = glm::translate(glm::vec3(30.0f, ScreenHeight - 60.0f, 1.0f)) *
-          glm::rotate(SDL_GetTicks() / 300.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
-          glm::scale(glm::vec3(20.0f, 20.0f, 20.0f));
-    mvp.update();
-    lab->draw();
+    ui.draw();
 
     mvp = glm::translate(glm::vec3(ScreenWidth - 30.0f, ScreenHeight - 60.0f, 0.0f)) *
           glm::scale(glm::vec3(20.0f, 20.0f, 20.0f));
