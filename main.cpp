@@ -68,7 +68,6 @@ int main()
   evHand.quit = [&done](const SDL_QuitEvent &) { done = true; };
   bool mouseDown = false;
   evHand.mouseMotion = [&camX, &camY, &camZ, &mouseDown](const SDL_MouseMotionEvent &e) {
-    mouseDown = ((e.state & SDL_BUTTON_LMASK) != 0);
     if (!mouseDown)
       return;
     camX -= CamMoveSpeed * e.xrel * camZ;
