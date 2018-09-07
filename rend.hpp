@@ -27,12 +27,15 @@ public:
   Var<glm::mat4> view;
 
   Var<glm::mat4> mvp;
+  Var<glm::vec4> color;
 
   std::unique_ptr<ShaderProgram> shad;
   std::unique_ptr<ShaderProgram> botShad;
   std::unique_ptr<ShaderProgram> terrainShad;
   std::unique_ptr<ShaderProgram> buildShad;
   std::unique_ptr<ShaderProgram> stoneShad;
+  std::unique_ptr<ShaderProgram> textShad;
+  std::unique_ptr<ShaderProgram> uiShad;
 
   std::unique_ptr<Obj> o2PlantObj;
   std::unique_ptr<Obj> h2OPlantObj;

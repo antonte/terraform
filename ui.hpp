@@ -10,6 +10,7 @@ public:
   bool onMouseUp(int x, int y);
   void draw();
   void add(Widget &);
+  void remove(Widget &);
 
 private:
   std::vector<Widget *> widgets;

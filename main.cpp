@@ -2,6 +2,7 @@
 #include "bot_class.hpp"
 #include "button.hpp"
 #include "inst.hpp"
+#include "lab.hpp"
 #include "rend.hpp"
 #include "screen.hpp"
 #include "stone.hpp"
@@ -31,6 +32,8 @@ COEFF(CamZoomSpeed, 0.1f);
 COEFF(MaxCamZ, 250.0f);
 COEFF(MinCamZ, 20.0f);
 COEFF(CamSpeed, 0.001f);
+COEFF(BotPrice, 100'000'000);
+COEFF(FontSize, 20.0f);
 
 int main()
 {
@@ -92,12 +95,6 @@ int main()
   auto nextMeasure = SDL_GetTicks() + 1000U;
   auto tickTime = SDL_GetTicks();
 
-  Var<glm::mat4> proj("proj");
-  Var<glm::mat4> mvp("mvp");
-  Var<glm::vec4> color("textColor");
-  ShaderProgram textShad("text", "text", proj, mvp, color);
-  ShaderProgram uiShad("ui", "ui", proj, mvp);
-
   // Obj* cross = lib.getObj("cross");
   Text text(lib, "font");
   int fps = 0;
@@ -124,10 +121,10 @@ int main()
     };
 
   Button botBtn(ScreenWidth / 2 - 30, ScreenHeight - 60.0f - 100, 60, 100);
-  botBtn.onDraw = [&mvp, &inst](bool pressed) {
-    mvp = glm::translate(glm::vec3(ScreenWidth / 2, ScreenHeight - 60.0f, 0.0f)) *
+  botBtn.onDraw = [&inst](bool pressed) {
+    inst.rend->mvp = glm::translate(glm::vec3(ScreenWidth / 2, ScreenHeight - 60.0f, 0.0f)) *
           glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
-    mvp.update();
+    inst.rend->mvp.update();
     inst.rend->botClass
       ->idleAnim[SDL_GetTicks() * 30 / 1000 % inst.rend->botClass->idleAnim.size()]
       ->draw();
@@ -139,7 +136,7 @@ int main()
     specs.maxAge = 20000;
     specs.batteryCapacity = 2000;
     specs.ram = Program::Default.data();
-    inst.world->money -= 100'000'000;
+    inst.world->money -= BotPrice;
     inst.world->add<Bot>(
       camX + rand() % 200 / 10.f - 10.0f, camY + rand() % 200 / 10.f - 10.0f, specs);
   };
@@ -147,33 +144,41 @@ int main()
   ui.add(botBtn);
 
   Obj *planet = lib.getObj("planet");
-  Button planetBtn(30 - 20, 30 - 20, 40, 40);
-  planetBtn.onDraw = [&mvp, &planet](bool pressed) {
-    mvp = glm::translate(glm::vec3(30.0f, 30.0f, 1.0f)) *
+  Button planetBtn(50 - 20, 30 - 20, 40, 40);
+  planetBtn.onDraw = [&inst, &planet](bool pressed) {
+    inst.rend->mvp = glm::translate(glm::vec3(50.0f, 30.0f, 1.0f)) *
           glm::rotate(SDL_GetTicks() / 300.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
           glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
-    mvp.update();
+    inst.rend->mvp.update();
     planet->draw();
   };
   ui.add(planetBtn);
 
+  std::unique_ptr<Lab> labDlg;
+
   Obj *lab = lib.getObj("lab");
-  Button labBtn(30 - 20, ScreenHeight - 60.0f - 20, 40, 40);
-  labBtn.onDraw = [&mvp, &lab](bool pressed) {
-    mvp = glm::translate(glm::vec3(30.0f, ScreenHeight - 60.0f, 1.0f)) *
-          glm::rotate(SDL_GetTicks() / 300.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
-          glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
-    mvp.update();
+  Button labBtn(50 - 20, ScreenHeight - 60.0f - 20, 40, 40);
+  labBtn.onDraw = [&inst, &lab](bool pressed) {
+    inst.rend->mvp = glm::translate(glm::vec3(50.0f, ScreenHeight - 60.0f, 1.0f)) *
+                     glm::rotate(SDL_GetTicks() / 300.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
+                     glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
+    inst.rend->mvp.update();
     lab->draw();
+  };
+  labBtn.onClick = [&labDlg, &ui, &inst, &lib]() {
+    if (!labDlg)
+      labDlg = std::make_unique<Lab>(*inst.rend, lib, ui);
+    else
+      labDlg = nullptr;
   };
   ui.add(labBtn);
 
   Obj *menu = lib.getObj("menu");
-  Button menuBtn(ScreenWidth - 30 - 20, ScreenHeight - 60.0f - 20, 40, 40);
-  menuBtn.onDraw = [&mvp, &menu](bool pressed) {
-    mvp = glm::translate(glm::vec3(ScreenWidth - 30.0f, ScreenHeight - 60.0f, 1.0f)) *
+  Button menuBtn(ScreenWidth - 50 - 20, ScreenHeight - 60.0f - 20, 40, 40);
+  menuBtn.onDraw = [&inst, &menu](bool pressed) {
+    inst.rend->mvp = glm::translate(glm::vec3(ScreenWidth - 50.0f, ScreenHeight - 60.0f, 1.0f)) *
           glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
-    mvp.update();
+    inst.rend->mvp.update();
     menu->draw();
   };
   ui.add(menuBtn);
@@ -182,10 +187,16 @@ int main()
   {
     while (evHand.poll()) {}
 
+    if (labDlg && labDlg->closed)
+      labDlg = nullptr;
+
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+
+    inst.rend->proj =
+      glm::perspective(glm::radians(45.0f), 1.0f * ScreenWidth / ScreenHeight, 0.1f, 1000.0f);
     inst.world->draw(*inst.rend, camX, camY, camZ);
 
     ++frames;
@@ -198,27 +209,26 @@ int main()
     }
 
     // UI section
-    proj = glm::ortho(0.0f, 1.0f * ScreenWidth, 1.0f * ScreenHeight, 0.0f, -1000.0f, 1000.0f);
-    uiShad.use();
+    inst.rend->proj = glm::ortho(0.0f, 1.0f * ScreenWidth, 1.0f * ScreenHeight, 0.0f, -1000.0f, 1000.0f);
+    inst.rend->uiShad->use();
 
     ui.draw();
 
-    glDisable(GL_DEPTH_TEST);
-    color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    textShad.use();
+    inst.rend->color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    inst.rend->textShad->use();
 
     {
-      mvp =
-        glm::translate(glm::vec3(0.0f, 0.0f, 0.0f)) * glm::scale(glm::vec3(20.0f, 20.0f, 20.0f));
-      mvp.update();
+      inst.rend->mvp =
+        glm::translate(glm::vec3(0.0f, 0.0f, 99.0f)) * glm::scale(glm::vec3(20.0f, 20.0f, 20.0f));
+      inst.rend->mvp.update();
       text.setText("FPS: " + std::to_string(fps));
       text.draw();
     }
 
     {
-      mvp =
-        glm::translate(glm::vec3(60.0f, 10.0f, 0.0f)) * glm::scale(glm::vec3(30.0f, 30.0f, 30.0f));
-      mvp.update();
+      inst.rend->mvp = glm::translate(glm::vec3(80.0f, 10.0f, 0.0f)) *
+                       glm::scale(glm::vec3(FontSize, FontSize, FontSize));
+      inst.rend->mvp.update();
       std::ostringstream stats;
       stats << std::fixed
             << 100.0f * (inst.world->getO2Level() + inst.world->getH2OLevel() + inst.world->getTreeLevel()) / 3.0f
@@ -228,12 +238,34 @@ int main()
     }
 
     {
-      mvp = glm::translate(glm::vec3(ScreenWidth / 2, 10.0f, 0.0f)) *
-            glm::scale(glm::vec3(30.0f, 30.0f, 30.0f));
-      mvp.update();
       std::ostringstream stats;
-      stats << "$" << std::fixed << inst.world->money << "\n" //
-            << "$" << std::fixed << inst.world->getIncome() << "/sec";
+      stats << "$" << std::fixed << inst.world->money;
+      auto w = text.getWidth(stats.str());
+      inst.rend->mvp = glm::translate(glm::vec3(ScreenWidth / 2 - w * FontSize / 2.0f, 10.0f, 0.0f)) *
+            glm::scale(glm::vec3(FontSize, FontSize, FontSize));
+      inst.rend->mvp.update();
+      text.setText(stats.str());
+      text.draw();
+    }
+    {
+      std::ostringstream stats;
+      stats << "$" << std::fixed << inst.world->getIncome() << "/sec";
+      auto w = text.getWidth(stats.str());
+      inst.rend->mvp =
+        glm::translate(glm::vec3(ScreenWidth / 2 - w * FontSize / 2.0f, FontSize + 10.0f, 0.0f)) *
+        glm::scale(glm::vec3(FontSize, FontSize, FontSize));
+      inst.rend->mvp.update();
+      text.setText(stats.str());
+      text.draw();
+    }
+    {
+      std::ostringstream stats;
+      stats << "$" << BotPrice << "/bot";
+      auto w = text.getWidth(stats.str());
+      inst.rend->mvp = glm::translate(glm::vec3(
+                         ScreenWidth / 2 - w * FontSize / 2.0f, ScreenHeight - 60.0f, 0.0f)) *
+                       glm::scale(glm::vec3(FontSize, FontSize, FontSize));
+      inst.rend->mvp.update();
       text.setText(stats.str());
       text.draw();
     }

@@ -1,5 +1,6 @@
 #include "ui.hpp"
 #include "widget.hpp"
+#include <algorithm>
 
 bool Ui::onMouseDown(int x, int y)
 {
@@ -26,4 +27,9 @@ void Ui::draw()
 void Ui::add(Widget &w)
 {
   widgets.push_back(&w);
+}
+
+void Ui::remove(Widget &w)
+{
+  widgets.erase(std::find(std::begin(widgets), std::end(widgets), &w));
 }
