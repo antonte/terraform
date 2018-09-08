@@ -1,4 +1,5 @@
 #include "bot_class.hpp"
+
 #include <shade/library.hpp>
 
 BotClass::BotClass(Library &lib) : energy("energy"), matter("matter")

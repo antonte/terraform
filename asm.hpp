@@ -1,7 +1,7 @@
 #pragma once
+#include <array>
 #include <cstdint>
 #include <initializer_list>
-#include <array>
 
 enum { RamSize = 1024 };
 using Ram = std::array<uint16_t, RamSize>;

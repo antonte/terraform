@@ -1,5 +1,7 @@
+#include "asm.hpp"
 #include "bot.hpp"
 #include "bot_class.hpp"
+#include "bot_specs.hpp"
 #include "button.hpp"
 #include "inst.hpp"
 #include "lab.hpp"
@@ -7,18 +9,16 @@
 #include "screen.hpp"
 #include "stone.hpp"
 #include "terrain.hpp"
-#include "tree.hpp"
 #include "ui.hpp"
 #include "world.hpp"
 #include <coeff/coefficient_registry.hpp>
-#include <iomanip>
 #include <log/log.hpp>
+#include <memory>
 #include <sdlpp/sdlpp.hpp>
 #include <shade/library.hpp>
 #include <shade/obj.hpp>
 #include <shade/shader_program.hpp>
 #include <shade/text.hpp>
-#include <shade/var.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>

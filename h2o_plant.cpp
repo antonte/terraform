@@ -3,8 +3,8 @@
 #include "rend.hpp"
 #include "terrain.hpp"
 #include "world.hpp"
-#include <shade/obj.hpp>
 #include <shade/shader_program.hpp>
+#include <shade/obj.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>

@@ -1,15 +1,10 @@
 #include "rend.hpp"
+
 #include "bot_class.hpp"
-#include "screen.hpp"
 #include "stone_class.hpp"
 #include "terrain.hpp"
-#include <shade/array_buffer.hpp>
-#include <shade/library.hpp>
-#include <shade/obj.hpp>
 #include <shade/shader_program.hpp>
-
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/transform.hpp>
+#include <shade/obj.hpp>
 
 static std::vector<glm::vec3> getWaterMesh()
 {

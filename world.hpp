@@ -1,9 +1,9 @@
 #pragma once
 #include "sched.hpp"
+#include <cstdint>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
 class ActiveEntity;
@@ -11,11 +11,6 @@ class Entity;
 class Library;
 class Rend;
 class Terrain;
-
-namespace sdl
-{
-  class Texture;
-}
 
 class World
 {

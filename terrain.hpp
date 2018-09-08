@@ -1,15 +1,16 @@
 #pragma once
-#include <list>
 #include <fastnoise/FastNoise.h>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <list>
 #include <memory>
-#include <shade/var.hpp>
 #include <unordered_map>
 #include <vector>
 
 class ArrayBuffer;
 class Library;
 class Rend;
-class World;
+
 namespace sdl
 {
   class Texture;

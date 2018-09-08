@@ -1,7 +1,7 @@
 #pragma once
-#include <shade/var.hpp>
 #include <glm/vec3.hpp>
 #include <memory>
+#include <shade/var.hpp>
 #include <vector>
 
 class ArrayBuffer;

@@ -1,7 +1,6 @@
 #pragma once
-#include "entity.hpp"
 #include "active_entity.hpp"
-#include "asm.hpp"
+#include "entity.hpp"
 #include "bot_specs.hpp"
 
 class Bot : public Entity, public ActiveEntity

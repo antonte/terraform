@@ -1,9 +1,7 @@
 #pragma once
-#include <glm/mat4x4.hpp>
-#include <shade/var.hpp>
 
-class World;
 class Rend;
+class World;
 
 class Entity
 {

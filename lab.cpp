@@ -1,13 +1,14 @@
 #include "lab.hpp"
+
 #include "button.hpp"
 #include "rend.hpp"
 #include "screen.hpp"
-#include "shade/library.hpp"
-#include "shade/obj.hpp"
-#include "shade/shader_program.hpp"
-#include "shade/text.hpp"
 #include "ui.hpp"
 #include <coeff/coefficient_registry.hpp>
+#include <shade/library.hpp>
+#include <shade/obj.hpp>
+#include <shade/shader_program.hpp>
+#include <shade/text.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>

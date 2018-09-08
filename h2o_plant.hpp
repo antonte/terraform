@@ -1,5 +1,4 @@
 #pragma once
-
 #include "entity.hpp"
 
 class H2OPlant: public Entity

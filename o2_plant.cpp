@@ -1,8 +1,8 @@
 #include "o2_plant.hpp"
 
-#include "world.hpp"
-#include "terrain.hpp"
 #include "rend.hpp"
+#include "terrain.hpp"
+#include "world.hpp"
 #include <shade/obj.hpp>
 #include <shade/shader_program.hpp>
 

@@ -1,7 +1,4 @@
 #include "asm.hpp"
-#include <cstdlib>
-
-struct RegPtr;
 
 Program::Program(std::initializer_list<OpCode> l)
 {

@@ -1,5 +1,7 @@
 #include "entity.hpp"
+
 #include "terrain.hpp"
+#include <algorithm>
 
 Entity::Entity(World &aWorld, float aX, float aY)
   : world(&aWorld),

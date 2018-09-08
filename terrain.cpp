@@ -1,14 +1,15 @@
 #include "terrain.hpp"
 
+#include "o2_plant.hpp"
 #include "pi.hpp"
 #include "rend.hpp"
-#include "world.hpp"
-#include <coeff/coefficient_registry.hpp>
-#include <log/log.hpp>
-#include <sdlpp/sdlpp.hpp>
+#include "tree.hpp"
 #include <shade/array_buffer.hpp>
 #include <shade/library.hpp>
 #include <shade/shader_program.hpp>
+
+#define GL_GLEXT_PROTOTYPES 1
+#include <SDL_opengl.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/normal.hpp>

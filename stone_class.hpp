@@ -1,8 +1,8 @@
 #pragma once
 #include <vector>
 
-class Obj;
 class Library;
+class Obj;
 
 class StoneClass
 {

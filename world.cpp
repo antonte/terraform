@@ -1,21 +1,27 @@
 #include "world.hpp"
 
 #include "active_entity.hpp"
-#include "bot.hpp"
-#include "bot_class.hpp"
+#include "button.hpp"
 #include "entity.hpp"
 #include "pi.hpp"
 #include "rend.hpp"
-#include "screen.hpp"
 #include "stone.hpp"
 #include "stone_class.hpp"
 #include "terrain.hpp"
+#include "ui.hpp"
 #include <coeff/coefficient_registry.hpp>
+#include <log/log.hpp>
+#include <shade/array_buffer.hpp>
 #include <shade/obj.hpp>
 #include <shade/shader_program.hpp>
+#include <shade/text.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
+
+COEFF(MapXK, 0.1f);
+COEFF(MapYK, 0.1f);
+COEFF(MapYBalance, 50);
 
 World::World(Library &lib) : terrain(std::make_unique<Terrain>(lib)) {}
 
@@ -25,10 +31,6 @@ static int getGridIdx(int x, int y)
 {
   return (x + Terrain::Width / 2) / 10 + ((y + Terrain::Height / 2) / 10) * (Terrain::Width / 10);
 }
-
-COEFF(MapXK, 0.1f);
-COEFF(MapYK, 0.1f);
-COEFF(MapYBalance, 50);
 
 void World::draw(Rend &rend, float camX, float camY, float camZ)
 {

@@ -1,14 +1,10 @@
 #include "stone.hpp"
+
 #include "pi.hpp"
-#include "stone_class.hpp"
+#include "rend.hpp"
 #include "terrain.hpp"
 #include "world.hpp"
-#include "rend.hpp"
-#include <shade/obj.hpp>
-#include <shade/shader_program.hpp>
-
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/transform.hpp>
+#include <cstdlib>
 
 Stone::Stone(World &world, float x, float y) : Entity(world, x, y)
 {

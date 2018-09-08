@@ -1,4 +1,5 @@
 #include "bot.hpp"
+
 #include "bot_class.hpp"
 #include "h2o_plant.hpp"
 #include "o2_plant.hpp"
@@ -8,10 +9,7 @@
 #include "terrain.hpp"
 #include "tree.hpp"
 #include "world.hpp"
-#include <SDL.h>
-#include <algorithm>
 #include <coeff/coefficient_registry.hpp>
-#include <log/log.hpp>
 #include <shade/obj.hpp>
 #include <shade/shader_program.hpp>
 
