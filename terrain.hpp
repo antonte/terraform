@@ -1,4 +1,5 @@
 #pragma once
+#include <list>
 #include <fastnoise/FastNoise.h>
 #include <memory>
 #include <shade/var.hpp>
@@ -16,7 +17,8 @@ namespace sdl
 
 struct TerrainChunk
 {
-  static const int ChunkSize = 50;
+  static const int ChunkSize = 100;
+  int idx;
   std::unique_ptr<ArrayBuffer> vertices;
   std::unique_ptr<ArrayBuffer> uvs;
   std::unique_ptr<ArrayBuffer> normals;
@@ -43,6 +45,10 @@ private:
   mutable std::vector<glm::vec3> tmpVertices;
   mutable std::vector<glm::vec2> tmpUvs;
   mutable std::vector<glm::vec3> tmpNormals;
-  std::unordered_map<int, TerrainChunk> cache;
+  enum { MaxCacheSize = 250 };
+  using AgeCache = std::list<TerrainChunk>;
+  using Cache = std::unordered_map<int, AgeCache::iterator>;
+  Cache cache;
+  AgeCache ageCache;
   TerrainChunk generateChunk(int x, int y) const;
 };

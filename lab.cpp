@@ -16,12 +16,12 @@ COEFF(LabFontSize, 40.0f);
 
 Lab::Lab(Rend &rend, Library &lib, Ui &aUi)
   : crossIcon(lib.getObj("cross")),
-    closeBtn(std::make_unique<Button>(ScreenWidth - 50 - 20, 60.0f - 20, 40, 40)),
+    closeBtn(std::make_unique<Button>(ScreenWidth - 50 - 20, 80.0f - 20, 40, 40)),
     researchBtn(std::make_unique<Button>(100, 100, ScreenWidth - 200, 40)),
     ui(&aUi)
 {
   closeBtn->onDraw = [this, &rend](bool pressed) {
-    rend.mvp = glm::translate(glm::vec3(ScreenWidth - 50.0f, 60.0f, 1.0f)) *
+    rend.mvp = glm::translate(glm::vec3(ScreenWidth - 50.0f, 80.0f, 1.0f)) *
                glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
     rend.mvp.update();
     crossIcon->draw();

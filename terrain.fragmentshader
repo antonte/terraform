@@ -2,13 +2,13 @@ out vec4 color;
 in vec2 uv;
 in vec3 vNormal;
 in float vO2Level;
-flat in int isUnderWater;
+in float isUnderWater;
 uniform sampler2D tex;
 
 void main(){
   float fDotProduct = max(0.0, dot(vNormal, vec3(.577, -.577, .577))) * 0.6;
   vec3 rgb;
-  if (isUnderWater == 0)
+  if (isUnderWater > 0)
     rgb = texture(tex, uv).rgb * vec3((1.0 - vO2Level), 1.0 + vO2Level * 0.5, 1.0);
   else
     rgb = texture(tex, uv).rgb * vec3(0.0, 0.7, 1.0);

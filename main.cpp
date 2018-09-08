@@ -239,20 +239,22 @@ int main()
 
     {
       std::ostringstream stats;
+      stats.imbue(std::locale(""));
       stats << "$" << std::fixed << inst.world->money;
       auto w = text.getWidth(stats.str());
-      inst.rend->mvp = glm::translate(glm::vec3(ScreenWidth / 2 - w * FontSize / 2.0f, 10.0f, 0.0f)) *
-            glm::scale(glm::vec3(FontSize, FontSize, FontSize));
+      inst.rend->mvp = glm::translate(glm::vec3(ScreenWidth - w * FontSize - 50.0f, 10.0f, 0.0f)) *
+                       glm::scale(glm::vec3(FontSize, FontSize, FontSize));
       inst.rend->mvp.update();
       text.setText(stats.str());
       text.draw();
     }
     {
       std::ostringstream stats;
+      stats.imbue(std::locale(""));
       stats << "$" << std::fixed << inst.world->getIncome() << "/sec";
       auto w = text.getWidth(stats.str());
       inst.rend->mvp =
-        glm::translate(glm::vec3(ScreenWidth / 2 - w * FontSize / 2.0f, FontSize + 10.0f, 0.0f)) *
+        glm::translate(glm::vec3(ScreenWidth - w * FontSize - 50.0f, FontSize + 10.0f, 0.0f)) *
         glm::scale(glm::vec3(FontSize, FontSize, FontSize));
       inst.rend->mvp.update();
       text.setText(stats.str());
@@ -260,6 +262,7 @@ int main()
     }
     {
       std::ostringstream stats;
+      stats.imbue(std::locale(""));
       stats << "$" << BotPrice << "/bot";
       auto w = text.getWidth(stats.str());
       inst.rend->mvp = glm::translate(glm::vec3(

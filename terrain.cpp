@@ -62,12 +62,29 @@ void Terrain::draw(Rend &rend,
       auto it = cache.find(getChunkIdx(x, y));
       if (it == std::end(cache))
       {
-        bool res;
-        std::tie(it, res) = cache.insert(std::make_pair(getChunkIdx(x, y), generateChunk(x, y)));
+        ageCache.push_front(generateChunk(x, y));
+        while (ageCache.size() > MaxCacheSize)
+        {
+          auto it = ageCache.end();
+          --it;
+          auto idx = it->idx;
+          ageCache.erase(it);
+          cache.erase(idx);
+        }
       }
-      it->second.vertices->activate();
-      it->second.uvs->activate();
-      it->second.normals->activate();
+      else
+      {
+        auto chank = std::move(*(it->second));
+        ageCache.erase(it->second);
+        ageCache.push_front(std::move(chank));
+        cache.erase(getChunkIdx(x, y));
+      }
+      bool res;
+      std::tie(it, res) = cache.insert(std::make_pair(getChunkIdx(x, y), std::begin(ageCache)));
+      auto ageIt = it->second;
+      ageIt->vertices->activate();
+      ageIt->uvs->activate();
+      ageIt->normals->activate();
       glDrawArrays(GL_TRIANGLES, 0, tmpVertices.size());
     }
 }
@@ -119,5 +136,6 @@ TerrainChunk Terrain::generateChunk(int xx, int yy) const
   chunk.vertices = std::make_unique<ArrayBuffer>(tmpVertices.data(), tmpVertices.size(), 0);
   chunk.uvs = std::make_unique<ArrayBuffer>(tmpUvs.data(), tmpUvs.size(), 1);
   chunk.normals = std::make_unique<ArrayBuffer>(tmpNormals.data(), tmpNormals.size(), 2);
+  chunk.idx = getChunkIdx(xx, yy);
   return chunk;
 }
