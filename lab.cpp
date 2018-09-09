@@ -9,7 +9,7 @@
 #include "text_button.hpp"
 #include "ui.hpp"
 #include "world.hpp"
-#include <coeff/coefficient_registry.hpp>
+#include <coeff/coeff_reg.hpp>
 #include <shade/library.hpp>
 #include <shade/obj.hpp>
 #include <shade/shader_program.hpp>
@@ -56,14 +56,17 @@ private:
 
 Lab::Lab(Library &lib, Inst &inst, Ui &aUi, BotSpecs &specs)
   : crossIcon(lib.getObj("cross")),
-    closeBtn(std::make_unique<Button>(ScreenWidth - 30 - 20, 70.0f - 20, 40, 40)),
-    bgPlane(
-      std::make_unique<BgPlane>(*inst.rend, 30, 70, ScreenWidth - 60, ScreenHeight - 180 - 80)),
+    closeBtn(std::make_unique<Button>((ScreenWidth - 375) / 2 - 20, 70.0f - 20, 40, 40)),
+    bgPlane(std::make_unique<BgPlane>(*inst.rend,
+                                      (ScreenWidth - 375) / 2,
+                                      70,
+                                      375,
+                                      ScreenHeight - 180 - 80)),
     ui(&aUi)
 {
   closeBtn->onDraw = [this, &inst](bool pressed) {
-    inst.rend->mvp = glm::translate(glm::vec3(ScreenWidth - 30.0f, 70.0f, 20.0f)) *
-               glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
+    inst.rend->mvp = glm::translate(glm::vec3((ScreenWidth - 375.0f) / 2.0f, 70.0f, 20.0f)) *
+                     glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
     inst.rend->uiShad->use();
     crossIcon->draw();
   };
@@ -78,7 +81,7 @@ Lab::Lab(Library &lib, Inst &inst, Ui &aUi, BotSpecs &specs)
                                 float improvement = 5.0f) {
     researchItems.push_back(std::make_pair(
       std::make_unique<ResearchItem>(value, description, k, unit, improvement),
-      std::make_unique<TextButton>(*inst.rend, lib, 60, y, ScreenWidth - 120, BtnHeight)));
+      std::make_unique<TextButton>(*inst.rend, lib, (ScreenWidth - 375) / 2, y, 375, BtnHeight)));
     auto &&item = researchItems.back().first.get();
     auto &&btn = researchItems.back().second.get();
     btn->setText(item->getText());

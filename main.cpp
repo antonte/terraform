@@ -11,7 +11,7 @@
 #include "terrain.hpp"
 #include "ui.hpp"
 #include "world.hpp"
-#include <coeff/coefficient_registry.hpp>
+#include <coeff/coeff_reg.hpp>
 #include <memory>
 #include <sdlpp/sdlpp.hpp>
 #include <shade/library.hpp>
@@ -35,7 +35,7 @@ COEFF(FontSize, 20.0f);
 
 int main()
 {
-  CoefficientRegistry::instance().load();
+  CoeffReg::instance().load();
   sdl::Init init(SDL_INIT_EVERYTHING);
   sdl::Window win("Terraform", 64, 100, ScreenWidth, ScreenHeight, SDL_WINDOW_OPENGL);
   sdl::Renderer rend(win.get(), -1, 0);
@@ -81,7 +81,7 @@ int main()
     camZ = glm::clamp(camZ, MinCamZ, MaxCamZ);
   };
   evHand.keyDown = [](const SDL_KeyboardEvent &keyEv) {
-    if (CoefficientRegistry::instance().onKeyDown(keyEv.keysym.sym))
+    if (CoeffReg::instance().onKeyDown(keyEv.keysym.sym))
     {
       // coeffText.setText(CoefficientRegistry::instance().display());
       return;

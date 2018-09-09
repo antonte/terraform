@@ -9,7 +9,7 @@
 #include "stone_class.hpp"
 #include "terrain.hpp"
 #include "ui.hpp"
-#include <coeff/coefficient_registry.hpp>
+#include <coeff/coeff_reg.hpp>
 #include <shade/array_buffer.hpp>
 #include <shade/obj.hpp>
 #include <shade/shader_program.hpp>

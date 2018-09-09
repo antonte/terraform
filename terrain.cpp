@@ -98,7 +98,7 @@ TerrainChunk Terrain::generateChunk(int xx, int yy) const
   const auto Sz = TerrainChunk::ChunkSize;
   auto x1 = (xx + Terrain::Width / 2) / Sz * Sz - Terrain::Width / 2;
   auto y1 = (yy + Terrain::Height / 2) / Sz * Sz - Terrain::Height / 2;
-  const auto GridSz = 2.0f;
+  const auto GridSz = 8.0f;
   for (float y = y1; y < y1 + Sz; y += GridSz)
     for (float x = x1; x < x1 + Sz; x += GridSz)
     {

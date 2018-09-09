@@ -9,7 +9,7 @@
 #include "terrain.hpp"
 #include "tree.hpp"
 #include "world.hpp"
-#include <coeff/coefficient_registry.hpp>
+#include <coeff/coeff_reg.hpp>
 #include <shade/obj.hpp>
 #include <shade/shader_program.hpp>
 

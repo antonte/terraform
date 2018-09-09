@@ -18,7 +18,7 @@ namespace sdl
 
 struct TerrainChunk
 {
-  static const int ChunkSize = 100;
+  static const int ChunkSize = 128;
   int idx;
   std::unique_ptr<ArrayBuffer> vertices;
   std::unique_ptr<ArrayBuffer> uvs;
