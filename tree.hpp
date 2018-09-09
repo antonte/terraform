@@ -15,5 +15,5 @@ private:
   void tryToReproduce();
   UnSched unSched;
   int dob;
-  int ttl;
+  int lifeSpan;
 };

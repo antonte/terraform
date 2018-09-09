@@ -27,10 +27,14 @@ void Ui::draw()
 
 void Ui::add(Widget &w)
 {
-  widgets.push_back(&w);
+  if (std::find(std::begin(widgets), std::end(widgets), &w) == std::end(widgets))
+    widgets.push_back(&w);
 }
 
 void Ui::remove(Widget &w)
 {
-  widgets.erase(std::find(std::begin(widgets), std::end(widgets), &w));
+  auto it = std::find(std::begin(widgets), std::end(widgets), &w);
+  if (it == std::end(widgets))
+    return;
+  widgets.erase(it);
 }

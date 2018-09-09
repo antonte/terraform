@@ -9,15 +9,18 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
-H2OPlant::H2OPlant(World &world, int ttl, float x, float y) : Entity(world, x, y)
+H2OPlant::H2OPlant(World &world, int lifeSpan, int aProdRate, float x, float y)
+  : Entity(world, x, y), prodRate(aProdRate)
 {
-  world.sched([this]() { this->world->kill(*this); }, ttl);
-  ++world.h2ORate;
+  world.sched([this]() { this->world->kill(*this); }, lifeSpan);
+  // TODO fix rounding issue
+  world.h2ORate += prodRate / 100;
 }
 
 H2OPlant::~H2OPlant()
 {
-  --world->h2ORate;
+  // TODO fix rounding issue
+  world->h2ORate -= prodRate / 100;
 }
 
 void H2OPlant::draw(Rend &rend)

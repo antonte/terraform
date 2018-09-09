@@ -19,24 +19,24 @@ private:
   BotSpecs specs;
   static const int TakeEnergy = 10;
   enum class Addr {
-    Move = 0xfff6,       // writing to this address makes bot to do something:
-                         // 0 - stop
-                         // 1 - move forward
-                         // 2 - turn right
-                         // 3 - move backward
-                         // 4 - turn left
-                         // 5 - take the stone
-                         // 6 - build another bot
-                         // 7 - build O2 generator
-                         // 8 - build water generator
-                         // 9 - plant the tree
-    StoneScan = 0xfff9,  // reading this address will return recommended command to reach the
-                         // closest stone
-    O2Level = 0xfffa,    // level of O2 on the planet
-    H2OLevel = 0xfffb, // amount of water on the planet
-    TreeLevel = 0xfffc,  // amount of trees on the planet
-    Matter = 0xfffe,     // reading from this address will return amount of matter the cell has
-    Energy = 0xffff,     // reading from this address will return amount of energy the cell has
+    Move = 0xfff6,      // writing to this address makes bot to do something:
+                        // 0 - stop
+                        // 1 - move forward
+                        // 2 - turn right
+                        // 3 - move backward
+                        // 4 - turn left
+                        // 5 - take the stone
+                        // 6 - build another bot
+                        // 7 - build O2 generator
+                        // 8 - build water generator
+                        // 9 - plant the tree
+    StoneScan = 0xfff9, // reading this address will return recommended command to reach the
+                        // closest stone
+    O2Level = 0xfffa,   // level of O2 on the planet
+    H2OLevel = 0xfffb,  // amount of water on the planet
+    TreeLevel = 0xfffc, // amount of trees on the planet
+    Matter = 0xfffe,    // reading from this address will return amount of matter the cell has
+    Energy = 0xffff,    // reading from this address will return amount of energy the cell has
   };
 
   static int lastId;

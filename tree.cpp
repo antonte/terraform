@@ -13,9 +13,9 @@
 Tree::Tree(World &world, float x, float y)
   : Entity(world, x, y),
     dob(world.getNow()),
-    ttl(100 + 360000 * world.getO2Level() * world.getH2OLevel())
+    lifeSpan(100 + 360000 * world.getO2Level() * world.getH2OLevel())
 {
-  world.sched([this]() { this->world->kill(*this); }, ttl);
+  world.sched([this]() { this->world->kill(*this); }, lifeSpan);
   unSched = world.sched.schedWithUnSched([this]() { tryToReproduce(); }, rand() % 900 + 100);
   ++world.treesNum;
 }

@@ -12,7 +12,6 @@
 #include "ui.hpp"
 #include "world.hpp"
 #include <coeff/coefficient_registry.hpp>
-#include <log/log.hpp>
 #include <memory>
 #include <sdlpp/sdlpp.hpp>
 #include <shade/library.hpp>
@@ -32,7 +31,6 @@ COEFF(CamZoomSpeed, 0.1f);
 COEFF(MaxCamZ, 250.0f);
 COEFF(MinCamZ, 20.0f);
 COEFF(CamSpeed, 0.001f);
-COEFF(BotPrice, 100'000'000);
 COEFF(FontSize, 20.0f);
 
 int main()
@@ -81,7 +79,6 @@ int main()
   evHand.mouseWheel = [&camZ](const SDL_MouseWheelEvent &e) {
     camZ = camZ * exp(e.y * CamZoomSpeed);
     camZ = glm::clamp(camZ, MinCamZ, MaxCamZ);
-    LOG("camZ", camZ);
   };
   evHand.keyDown = [](const SDL_KeyboardEvent &keyEv) {
     if (CoefficientRegistry::instance().onKeyDown(keyEv.keysym.sym))
@@ -101,7 +98,6 @@ int main()
 
   Ui ui;
   evHand.mouseButtonDown = [&ui, &mouseDown](const SDL_MouseButtonEvent &e) {
-    LOG("mouse button down", e.x, e.y);
     if (e.button != SDL_BUTTON_LEFT)
       return;
     if (ui.onMouseDown(e.x, e.y))
@@ -110,7 +106,6 @@ int main()
   };
   evHand.mouseButtonUp =
     [&ui, &mouseDown](const SDL_MouseButtonEvent &e) {
-      LOG("mouse button up", e.x, e.y);
       if (e.button != SDL_BUTTON_LEFT)
         return;
       if (ui.onMouseUp(e.x, e.y))
@@ -130,15 +125,11 @@ int main()
       ->draw();
   };
   botBtn.onClick = [&camX, &camY, &inst]() {
-    if (inst.world->money < 100'000'000)
+    if (inst.world->money < inst.world->specs.botPrice)
       return;
-    BotSpecs specs;
-    specs.maxAge = 20000;
-    specs.batteryCapacity = 2000;
-    specs.ram = Program::Default.data();
-    inst.world->money -= BotPrice;
+    inst.world->money -= inst.world->specs.botPrice;
     inst.world->add<Bot>(
-      camX + rand() % 200 / 10.f - 10.0f, camY + rand() % 200 / 10.f - 10.0f, specs);
+      camX + rand() % 200 / 10.f - 10.0f, camY + rand() % 200 / 10.f - 10.0f, inst.world->specs);
   };
 
   ui.add(botBtn);
@@ -154,7 +145,7 @@ int main()
   };
   ui.add(planetBtn);
 
-  std::unique_ptr<Lab> labDlg;
+  Lab labDlg(lib, inst, ui, inst.world->specs);
 
   Obj *lab = lib.getObj("lab");
   Button labBtn(50 - 20, ScreenHeight - 60.0f - 20, 40, 40);
@@ -165,11 +156,11 @@ int main()
     inst.rend->mvp.update();
     lab->draw();
   };
-  labBtn.onClick = [&labDlg, &ui, &inst, &lib]() {
-    if (!labDlg)
-      labDlg = std::make_unique<Lab>(*inst.rend, lib, ui);
+  labBtn.onClick = [&labDlg]() {
+    if (labDlg.isVisible())
+      labDlg.hide();
     else
-      labDlg = nullptr;
+      labDlg.show();
   };
   ui.add(labBtn);
 
@@ -187,9 +178,6 @@ int main()
   {
     while (evHand.poll()) {}
 
-    if (labDlg && labDlg->closed)
-      labDlg = nullptr;
-
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -202,7 +190,6 @@ int main()
     ++frames;
     if (SDL_GetTicks() > nextMeasure)
     {
-      LOG("fps", frames);
       fps = frames;
       frames = 0;
       nextMeasure += 1000;
@@ -218,10 +205,12 @@ int main()
     inst.rend->textShad->use();
 
     {
-      inst.rend->mvp =
-        glm::translate(glm::vec3(0.0f, 0.0f, 99.0f)) * glm::scale(glm::vec3(20.0f, 20.0f, 20.0f));
-      inst.rend->mvp.update();
       text.setText("FPS: " + std::to_string(fps));
+      auto w = text.getWidth() * 20.0f;
+      inst.rend->mvp =
+        glm::translate(glm::vec3(ScreenWidth - w, ScreenHeight - 20.0f, 0.0f)) *
+        glm::scale(glm::vec3(20.0f, 20.0f, 20.0f));
+      inst.rend->mvp.update();
       text.draw();
     }
 
@@ -241,35 +230,35 @@ int main()
       std::ostringstream stats;
       stats.imbue(std::locale(""));
       stats << "$" << std::fixed << inst.world->money;
-      auto w = text.getWidth(stats.str());
+      text.setText(stats.str());
+      auto w = text.getWidth();
       inst.rend->mvp = glm::translate(glm::vec3(ScreenWidth - w * FontSize - 50.0f, 10.0f, 0.0f)) *
                        glm::scale(glm::vec3(FontSize, FontSize, FontSize));
       inst.rend->mvp.update();
-      text.setText(stats.str());
       text.draw();
     }
     {
       std::ostringstream stats;
       stats.imbue(std::locale(""));
       stats << "$" << std::fixed << inst.world->getIncome() << "/sec";
-      auto w = text.getWidth(stats.str());
+      text.setText(stats.str());
+      auto w = text.getWidth();
       inst.rend->mvp =
         glm::translate(glm::vec3(ScreenWidth - w * FontSize - 50.0f, FontSize + 10.0f, 0.0f)) *
         glm::scale(glm::vec3(FontSize, FontSize, FontSize));
       inst.rend->mvp.update();
-      text.setText(stats.str());
       text.draw();
     }
     {
       std::ostringstream stats;
       stats.imbue(std::locale(""));
-      stats << "$" << BotPrice << "/bot";
-      auto w = text.getWidth(stats.str());
+      stats << "$" << inst.world->specs.botPrice << "/bot";
+      text.setText(stats.str());
+      auto w = text.getWidth();
       inst.rend->mvp = glm::translate(glm::vec3(
                          ScreenWidth / 2 - w * FontSize / 2.0f, ScreenHeight - 60.0f, 0.0f)) *
                        glm::scale(glm::vec3(FontSize, FontSize, FontSize));
       inst.rend->mvp.update();
-      text.setText(stats.str());
       text.draw();
     }
 

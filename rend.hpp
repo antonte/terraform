@@ -43,4 +43,5 @@ public:
 
   std::unique_ptr<ArrayBuffer> waterMesh;
   std::unique_ptr<ShaderProgram> waterShad;
+  std::unique_ptr<ShaderProgram> planeShad;
 };

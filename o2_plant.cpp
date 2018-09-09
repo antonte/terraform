@@ -9,15 +9,18 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
-O2Plant::O2Plant(World &world, int ttl, float x, float y) : Entity(world, x, y)
+O2Plant::O2Plant(World &world, int lifeSpan, int aProdRate, float x, float y)
+  : Entity(world, x, y), prodRate(aProdRate)
 {
-  world.sched([this]() { this->world->kill(*this); }, ttl);
-  ++world.o2Rate;
+  world.sched([this]() { this->world->kill(*this); }, lifeSpan);
+  // TODO fix rounding issue
+  world.o2Rate += prodRate / 100;
 }
 
 O2Plant::~O2Plant()
 {
-  --world->o2Rate;
+  // TODO fix rounding issue
+  world->o2Rate -= prodRate / 100;
 }
 
 void O2Plant::draw(Rend &rend)

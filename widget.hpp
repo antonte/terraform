@@ -15,7 +15,7 @@ protected:
   int h;
 
 private:
-  virtual bool onMouseDown(int x, int y) = 0;
-  virtual bool onMouseUp(int x, int y) = 0;
-  virtual void draw() = 0;
+  virtual bool onMouseDown(int x, int y);
+  virtual bool onMouseUp(int x, int y);
+  virtual void draw();
 };

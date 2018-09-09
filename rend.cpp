@@ -49,7 +49,8 @@ Rend::Rend(Library &lib)
     h2OPlantObj(std::make_unique<Obj>(lib, "h2o_plant")),
     treeObj(std::make_unique<Obj>(lib, "tree")),
     waterMesh(std::make_unique<ArrayBuffer>(getWaterMesh(), 0)),
-    waterShad(std::make_unique<ShaderProgram>("water", "water", mvp, proj, view, h2OLevel, time))
+    waterShad(std::make_unique<ShaderProgram>("water", "water", mvp, proj, view, h2OLevel, time)),
+    planeShad(std::make_unique<ShaderProgram>("plane", "plane", mvp, proj, time))
 {
 }
 

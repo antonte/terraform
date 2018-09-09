@@ -1,4 +1,5 @@
 #pragma once
+#include "bot_specs.hpp"
 #include "sched.hpp"
 #include <cstdint>
 #include <memory>
@@ -39,6 +40,7 @@ public:
 
   Sched sched;
   std::unique_ptr<Terrain> terrain;
+  BotSpecs specs;
 
 public:
   int botsNum = 0;

@@ -16,14 +16,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
-COEFF(BotSpeed, 0.03f);
 COEFF(BotRotationSpeed, 0.03f);
-COEFF(BotChargeRate, 3);
-COEFF(BuildEnergy, 300);
 COEFF(SpawnDistance, 5);
-COEFF(TTL, 1000.0f);
-COEFF(TakeTime, 100.0f);
-COEFF(BuildTime, 1000.0f);
 
 int Bot::lastId = 0;
 
@@ -55,7 +49,7 @@ void Bot::draw(Rend &rend)
            glm::rotate(SDL_GetTicks() * 0.001f, glm::vec3(0.0f, 0.0f, 1.0f));
   };
 
-  if (energy < BotChargeRate + 1)
+  if (energy < specs.chargeRate / 100 + 1)
   {
     auto &&anim = rend.botClass->idleAnim;
     anim[SDL_GetTicks() * 30 / 1000 % anim.size()]->draw();
@@ -153,7 +147,7 @@ void Bot::tick()
   if (rand() % 40000 == 0)
     specs.ram[rand() % RamSize] = rand() % 0x10000; // make bot code mutate
   ++age;
-  if (age > specs.maxAge)
+  if (age > specs.lifeSpan)
     world->kill(*this);
 
   botCrowdMeter *= 0.9999f;
@@ -174,13 +168,16 @@ void Bot::tick()
   switch (move)
   {
   case Move::Stop:
-    energy = std::min(energy + BotChargeRate, static_cast<int>(specs.batteryCapacity));
+    // TODO fix rounding
+    energy = std::min(energy + specs.chargeRate / 100, static_cast<int>(specs.batteryCapacity));
     break;
   case Move::Frwd:
     if (energy < 1)
       break;
     energy -= 1;
-    world->move(*this, x + BotSpeed * cos(direction), y + BotSpeed * sin(direction));
+    world->move(*this,
+                x + specs.speed / 10000.0f * cos(direction),
+                y + specs.speed / 10000.0f * sin(direction));
     break;
   case Move::Right:
     if (energy < 1)
@@ -194,7 +191,9 @@ void Bot::tick()
     if (energy < 1)
       break;
     energy -= 1;
-    world->move(*this, x - BotSpeed * cos(direction), y - BotSpeed * sin(direction));
+    world->move(*this,
+                x - specs.speed / 10000.0f * cos(direction),
+                y - specs.speed / 10000.0f * sin(direction));
     break;
   case Move::Left:
     if (energy < 1)
@@ -207,86 +206,63 @@ void Bot::tick()
   case Move::Take:
   {
     move = Move::Stop;
-    if (energy < TakeEnergy)
-      break;
-    if (matter + Stone::Matter > MaxMatter)
-      break;
-    Entity *clEnt = nullptr;
-    float minDist;
-    for (auto &&ent : world->getAround(x, y))
-    {
-      if (ent == this)
-        continue;
-      if (!dynamic_cast<Stone *>(ent))
-        continue;
-      auto dist = std::hypot(ent->getX() - x, ent->getY() - y);
-      if (!clEnt || dist < minDist)
-      {
-        clEnt = ent;
-        minDist = dist;
-        continue;
-      }
-    }
-    if (!clEnt)
-      break;
-    if (minDist >= 0.5f)
-      break;
-    energy -= TakeEnergy;
-    matter += Stone::Matter;
-    world->remove(*clEnt);
     break;
   }
   case Move::BuildBot:
     move = Move::Stop;
-    if (energy < BuildEnergy)
+    if (energy < specs.buildEnergy)
     {
       energy = 0;
       break;
     }
     if (matter < Bot::Matter)
       break;
-    energy -= BuildEnergy;
+    energy -= specs.buildEnergy;
     matter -= Bot::Matter;
     world->add<Bot>(x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction), specs);
     break;
   case Move::BuildO2Plant:
     move = Move::Stop;
-    if (energy < BuildEnergy)
+    if (energy < specs.buildEnergy)
     {
       energy = 0;
       break;
     }
     if (matter < Bot::Matter)
       break;
-    energy -= BuildEnergy;
+    energy -= specs.buildEnergy;
     matter -= Bot::Matter;
-    world->add<O2Plant>(
-      12000, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction));
+    world->add<O2Plant>(specs.o2PlantLifeSpan,
+                        specs.o2PlantProdRate,
+                        x + SpawnDistance * cos(direction),
+                        y + SpawnDistance * sin(direction));
     break;
   case Move::BuildH2OPlant:
     move = Move::Stop;
-    if (energy < BuildEnergy)
+    if (energy < specs.buildEnergy)
     {
       energy = 0;
       break;
     }
     if (matter < Bot::Matter)
       break;
-    energy -= BuildEnergy;
+    energy -= specs.buildEnergy;
     matter -= Bot::Matter;
-    world->add<H2OPlant>(
-      12000, x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction));
+    world->add<H2OPlant>(specs.h2OPlantLifeSpan,
+                         specs.h2OPlantProdRate,
+                         x + SpawnDistance * cos(direction),
+                         y + SpawnDistance * sin(direction));
     break;
   case Move::PlantTree:
     move = Move::Stop;
-    if (energy < BuildEnergy)
+    if (energy < specs.buildEnergy)
     {
       energy = 0;
       break;
     }
     if (matter < Bot::Matter)
       break;
-    energy -= BuildEnergy;
+    energy -= specs.buildEnergy;
     matter -= Bot::Matter;
     world->add<Tree>(x + SpawnDistance * cos(direction), y + SpawnDistance * sin(direction));
     break;
@@ -538,7 +514,38 @@ void Bot::setRam(uint16_t addr, uint16_t value)
     case Move::Right:
     case Move::Bckwd:
     case Move::Left: break;
-    case Move::Take: busyCount = TakeTime; break;
+    case Move::Take:
+    {
+      busyCount = specs.takeTime;
+      if (energy < TakeEnergy)
+        break;
+      if (matter + Stone::Matter > MaxMatter)
+        break;
+      Entity *clEnt = nullptr;
+      float minDist;
+      for (auto &&ent : world->getAround(x, y))
+      {
+        if (ent == this)
+          continue;
+        if (!dynamic_cast<Stone *>(ent))
+          continue;
+        auto dist = std::hypot(ent->getX() - x, ent->getY() - y);
+        if (!clEnt || dist < minDist)
+        {
+          clEnt = ent;
+          minDist = dist;
+          continue;
+        }
+      }
+      if (!clEnt)
+        break;
+      if (minDist >= 0.5f)
+        break;
+      energy -= TakeEnergy;
+      matter += Stone::Matter;
+      world->remove(*clEnt);
+      break;
+    }
     case Move::BuildBot:
       if (botCrowdMeter <= o2CrowdMeter && botCrowdMeter <= h2oCrowdMeter &&
           botCrowdMeter <= treeCrowdMeter)
@@ -549,11 +556,11 @@ void Bot::setRam(uint16_t addr, uint16_t value)
         value = static_cast<int>(Move::BuildH2OPlant);
       else
         value = static_cast<int>(Move::PlantTree);
-      busyCount = BuildTime;
+      busyCount = specs.buildTime;
       break;
     case Move::BuildO2Plant:
     case Move::BuildH2OPlant:
-    case Move::PlantTree: busyCount = BuildTime; break;
+    case Move::PlantTree: busyCount = specs.buildTime; break;
     }
 
     move = static_cast<Move>(value);
