@@ -11,11 +11,18 @@ class Obj;
 class ShaderProgram;
 class StoneClass;
 
+namespace sdl
+{
+  class Renderer;
+}
+
 class Rend
 {
 public:
-  Rend(Library &);
+  Rend(sdl::Renderer &);
   ~Rend();
+
+  std::unique_ptr<Library> lib;
   std::unique_ptr<BotClass> botClass;
   std::unique_ptr<StoneClass> stoneClass;
   std::vector<glm::vec3> stoneMvps;

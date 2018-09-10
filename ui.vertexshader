@@ -21,7 +21,8 @@ mat4 rotate(float angle, vec3 axis)
 
 void main()
 {
-  gl_Position = proj * mvp * rotate(1 * PI / 10, vec3(1, 0, 0)) * rotate(PI / 2, vec3(0, 1, 0)) * rotate(PI, vec3(1, 0, 0)) * vec4(vertexPosition_modelspace, 1.0);
+  gl_Position = proj * mvp * rotate(1 * PI / 10, vec3(1, 0, 0)) * rotate(PI / 2, vec3(0, 1, 0)) *
+                rotate(PI, vec3(1, 0, 0)) * vec4(vertexPosition_modelspace, 1.0);
   uv = vertexUV;
-  vNormal = vec4(vertexNormal, 0.0).xyz;
+  vNormal = normalize(vec4(vertexNormal, 0.0)).xyz;
 }

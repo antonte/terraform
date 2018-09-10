@@ -38,8 +38,9 @@ class BgPlane: public Widget
 {
 public:
   BgPlane(Rend &aRend, int x, int y, int w, int h)
-    : Widget(x, y, w, h), rend(&aRend), planeMesh(getPlaneMesh(), 0)
+    : Widget(x, y, w, h), rend(&aRend), planeMesh(getPlaneMesh(), 0), title(*rend->lib, "font")
   {
+    title.setText("Research");
   }
   void draw() override
   {
@@ -48,31 +49,41 @@ public:
     rend->planeShad->use();
     planeMesh.activate();
     glDrawArrays(GL_TRIANGLES, 0, 6);
+    rend->textShad->use();
+    rend->mvp =
+      glm::translate(glm::vec3((ScreenWidth - title.getWidth() * 30) / 2.0f, y - 30, -2.0f)) *
+      glm::scale(glm::vec3(30, 30, 30.0f));
+    rend->mvp.update();
+    title.draw();
   }
 private:
   Rend* rend;
   ArrayBuffer planeMesh;
+  Text title;
 };
+
+static const int DialogY = 75;
+static const int DialogWidth = 360;
 
 Lab::Lab(Library &lib, Inst &inst, Ui &aUi, BotSpecs &specs)
   : crossIcon(lib.getObj("cross")),
-    closeBtn(std::make_unique<Button>((ScreenWidth - 375) / 2 - 20, 70.0f - 20, 40, 40)),
+    closeBtn(std::make_unique<Button>((ScreenWidth - DialogWidth) / 2 - 20, DialogY + 5 - 20, 40, 40)),
     bgPlane(std::make_unique<BgPlane>(*inst.rend,
-                                      (ScreenWidth - 375) / 2,
-                                      70,
-                                      375,
-                                      ScreenHeight - 180 - 80)),
+                                      (ScreenWidth - DialogWidth) / 2,
+                                      DialogY + 5,
+                                      DialogWidth,
+                                      ScreenHeight - 180 - DialogY)),
     ui(&aUi)
 {
   closeBtn->onDraw = [this, &inst](bool pressed) {
-    inst.rend->mvp = glm::translate(glm::vec3((ScreenWidth - 375.0f) / 2.0f, 70.0f, 20.0f)) *
+    inst.rend->mvp = glm::translate(glm::vec3((1.0f * ScreenWidth - DialogWidth) / 2.0f, 1.0f * DialogY + 5.0f, 20.0f)) *
                      glm::scale(glm::vec3(20.0f, 20.0f, 20.0f) * (pressed ? 1.3f : 1.0f));
     inst.rend->uiShad->use();
     crossIcon->draw();
   };
   closeBtn->onClick = [this]() { hide(); };
 
-  int y = 65;
+  int y = DialogY;
   auto const BtnHeight = TextButton::FontSize * 2 * 110 / 100;
   auto createResearchItem = [&](int &value,
                                 const std::string &description,
@@ -81,7 +92,8 @@ Lab::Lab(Library &lib, Inst &inst, Ui &aUi, BotSpecs &specs)
                                 float improvement = 5.0f) {
     researchItems.push_back(std::make_pair(
       std::make_unique<ResearchItem>(value, description, k, unit, improvement),
-      std::make_unique<TextButton>(*inst.rend, lib, (ScreenWidth - 375) / 2, y, 375, BtnHeight)));
+      std::make_unique<TextButton>(
+        *inst.rend, lib, (ScreenWidth - DialogWidth) / 2, y, DialogWidth, BtnHeight)));
     auto &&item = researchItems.back().first.get();
     auto &&btn = researchItems.back().second.get();
     btn->setText(item->getText());
@@ -97,7 +109,7 @@ Lab::Lab(Library &lib, Inst &inst, Ui &aUi, BotSpecs &specs)
   };
 
   createResearchItem(specs.lifeSpan, "Increase bot's robustness", 1.0f / 100.0f, " s");
-  createResearchItem(specs.batteryCapacity, "Increase battery capacity", 5.0f, " mAh");
+  createResearchItem(specs.batteryCapacity, "Increase battery capacity", 5.0f / 1000.0f, " Ah");
   createResearchItem(specs.chargeRate, "Better solar panels", 0.25f, " mA");
   createResearchItem(specs.speed, "Increase bot's speed", 3.0f / 1100.0f, " MPH");
   createResearchItem(specs.buildTime, "Reduce build time", 1.0f / 100.0f, " s", -5.0f);

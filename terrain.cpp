@@ -90,47 +90,91 @@ void Terrain::draw(Rend &rend,
     }
 }
 
+static const int GridSz = 8;
+
+static glm::vec3 norm(bool isUp, int x, int y)
+{
+  if (isUp)
+  {
+    int xx0 = x;
+    int yy0 = y;
+    int xx1 = x + GridSz;
+    int yy1 = y + GridSz;
+    int xx2 = x;
+    int yy2 = y + GridSz;
+    return glm::triangleNormal(glm::vec3(1.0f * xx0, 1.0f * yy0, Terrain::getZ(xx0, yy0)),
+                               glm::vec3(1.0f * xx1, 1.0f * yy1, Terrain::getZ(xx1, yy1)),
+                               glm::vec3(1.0f * xx2, 1.0f * yy2, Terrain::getZ(xx2, yy2)));
+  }
+  else
+  {
+    int xx0 = x;
+    int yy0 = y;
+    int xx1 = x + GridSz;
+    int yy1 = y;
+    int xx2 = x + GridSz;
+    int yy2 = y + GridSz;
+    return glm::triangleNormal(glm::vec3(1.0f * xx0, 1.0f * yy0, Terrain::getZ(xx0, yy0)),
+                               glm::vec3(1.0f * xx1, 1.0f * yy1, Terrain::getZ(xx1, yy1)),
+                               glm::vec3(1.0f * xx2, 1.0f * yy2, Terrain::getZ(xx2, yy2)));
+  }
+}
+
+static glm::vec3 getNormal(int x, int y)
+{
+  glm::vec3 sum = glm::vec3(0.0f, 0.0f, 0.0f);
+
+  static int dxys[][2] = {{0, 0}, {0, 0}, {-1, 0}, {-1, -1}, {-1, -1}, {0, -1}};
+  static bool ups[] = {false, true, false, true, false, true};
+
+  for (int i = 0; i < 6; ++i)
+    sum += norm(ups[i], x + dxys[i][0], y + dxys[i][1]);
+
+  return sum / 6.0f;
+}
+
 TerrainChunk Terrain::generateChunk(int xx, int yy) const
 {
   tmpVertices.clear();
   tmpUvs.clear();
   tmpNormals.clear();
   const auto Sz = TerrainChunk::ChunkSize;
-  auto x1 = (xx + Terrain::Width / 2) / Sz * Sz - Terrain::Width / 2;
-  auto y1 = (yy + Terrain::Height / 2) / Sz * Sz - Terrain::Height / 2;
-  const auto GridSz = 8.0f;
-  for (float y = y1; y < y1 + Sz; y += GridSz)
-    for (float x = x1; x < x1 + Sz; x += GridSz)
+  int x1 = (xx + Terrain::Width / 2) / Sz * Sz - Terrain::Width / 2;
+  int y1 = (yy + Terrain::Height / 2) / Sz * Sz - Terrain::Height / 2;
+  for (int y = y1; y < y1 + Sz; y += GridSz)
+    for (int x = x1; x < x1 + Sz; x += GridSz)
     {
       {
-        auto p1 = glm::vec3(x, y, getZ(x, y));
+        auto p1 = glm::vec3(1.0f * x, 1.0f * y, getZ(x, y));
         tmpVertices.push_back(p1);
-        auto p2 = glm::vec3(x + GridSz, y, getZ(x + GridSz, y));
+        auto p2 = glm::vec3(1.0f * x + GridSz, 1.0f * y, getZ(x + GridSz, y));
         tmpVertices.push_back(p2);
-        auto p3 = glm::vec3(x, y + GridSz, getZ(x, y + GridSz));
+        auto p3 = glm::vec3(1.0f * x, 1.0f * y + GridSz, getZ(x, y + GridSz));
         tmpVertices.push_back(p3);
-        auto n = glm::triangleNormal(p1, p2, p3);
-        tmpNormals.push_back(n);
-        tmpNormals.push_back(n);
-        tmpNormals.push_back(n);
+
         tmpUvs.push_back(glm::xy(p1) / 100.0f);
         tmpUvs.push_back(glm::xy(p2) / 100.0f);
         tmpUvs.push_back(glm::xy(p3) / 100.0f);
+
+        tmpNormals.push_back(getNormal(x, y));
+        tmpNormals.push_back(getNormal(x + GridSz, y));
+        tmpNormals.push_back(getNormal(x, y + GridSz));
       }
       {
-        auto p1 = glm::vec3(x, y, getZ(x, y));
+        auto p1 = glm::vec3(1.0f * x, 1.0f * y, getZ(x, y));
         tmpVertices.push_back(p1);
-        auto p2 = glm::vec3(x, y + GridSz, getZ(x, y + GridSz));
+        auto p2 = glm::vec3(1.0f * x, 1.0f * y + GridSz, getZ(x, y + GridSz));
         tmpVertices.push_back(p2);
-        auto p3 = glm::vec3(x - GridSz, y + GridSz, getZ(x - GridSz, y + GridSz));
+        auto p3 = glm::vec3(1.0f * x - GridSz, 1.0f * y + GridSz, getZ(x - GridSz, y + GridSz));
         tmpVertices.push_back(p3);
-        auto n = glm::triangleNormal(p1, p2, p3);
-        tmpNormals.push_back(n);
-        tmpNormals.push_back(n);
-        tmpNormals.push_back(n);
+
         tmpUvs.push_back(glm::xy(p1) / 100.0f);
         tmpUvs.push_back(glm::xy(p2) / 100.0f);
         tmpUvs.push_back(glm::xy(p3) / 100.0f);
+
+        tmpNormals.push_back(getNormal(x, y));
+        tmpNormals.push_back(getNormal(x, y + GridSz));
+        tmpNormals.push_back(getNormal(x - GridSz, y + GridSz));
       }
     }
   TerrainChunk chunk;

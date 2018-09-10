@@ -50,9 +50,8 @@ int main()
   auto camVX = 0.0f;
   auto camVY = 0.0f;
   auto camZ = 180.0f;
-  Library lib(rend.get());
 
-  Inst inst(lib);
+  Inst inst(rend);
   for (auto i = 0; i < 100000;)
   {
     auto x = rand() % (Terrain::Width * 10) / 10.0f - Terrain::Width / 2;
@@ -93,7 +92,7 @@ int main()
   auto tickTime = SDL_GetTicks();
 
   // Obj* cross = lib.getObj("cross");
-  Text text(lib, "font");
+  Text text(*inst.rend->lib, "font");
   int fps = 0;
 
   Ui ui;
@@ -134,7 +133,7 @@ int main()
 
   ui.add(botBtn);
 
-  Obj *planet = lib.getObj("planet");
+  Obj *planet = inst.rend->lib->getObj("planet");
   Button planetBtn(50 - 20, 30 - 20, 40, 40);
   planetBtn.onDraw = [&inst, &planet](bool pressed) {
     inst.rend->mvp = glm::translate(glm::vec3(50.0f, 30.0f, 1.0f)) *
@@ -145,9 +144,9 @@ int main()
   };
   ui.add(planetBtn);
 
-  Lab labDlg(lib, inst, ui, inst.world->specs);
+  Lab labDlg(*inst.rend->lib, inst, ui, inst.world->specs);
 
-  Obj *lab = lib.getObj("lab");
+  Obj *lab = inst.rend->lib->getObj("lab");
   Button labBtn(50 - 20, ScreenHeight - 60.0f - 20, 40, 40);
   labBtn.onDraw = [&inst, &lab](bool pressed) {
     inst.rend->mvp = glm::translate(glm::vec3(50.0f, ScreenHeight - 60.0f, 1.0f)) *
@@ -164,7 +163,7 @@ int main()
   };
   ui.add(labBtn);
 
-  Obj *menu = lib.getObj("menu");
+  Obj *menu = inst.rend->lib->getObj("menu");
   Button menuBtn(ScreenWidth - 50 - 20, ScreenHeight - 60.0f - 20, 40, 40);
   menuBtn.onDraw = [&inst, &menu](bool pressed) {
     inst.rend->mvp = glm::translate(glm::vec3(ScreenWidth - 50.0f, ScreenHeight - 60.0f, 1.0f)) *

@@ -3,6 +3,9 @@
 #include "rend.hpp"
 #include "world.hpp"
 
-Inst::Inst(Library &lib) : world(std::make_unique<World>(lib)), rend(std::make_unique<Rend>(lib)) {}
+Inst::Inst(sdl::Renderer &sdlRend)
+  : rend(std::make_unique<Rend>(sdlRend)), world(std::make_unique<World>(*rend->lib))
+{
+}
 
 Inst::~Inst() {}

@@ -5,11 +5,16 @@ class Library;
 class Rend;
 class World;
 
+namespace sdl
+{
+  class Renderer;
+}
+
 class Inst
 {
 public:
-  Inst(Library&);
+  Inst(sdl::Renderer &);
   ~Inst();
-  std::unique_ptr<World> world;
   std::unique_ptr<Rend> rend;
+  std::unique_ptr<World> world;
 };

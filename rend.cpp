@@ -19,9 +19,10 @@ static std::vector<glm::vec3> getWaterMesh()
   return res;
 }
 
-Rend::Rend(Library &lib)
-  : botClass(std::make_unique<BotClass>(lib)),
-    stoneClass(std::make_unique<StoneClass>(lib)),
+Rend::Rend(sdl::Renderer &sdlRend)
+  : lib(std::make_unique<Library>(sdlRend.get())),
+    botClass(std::make_unique<BotClass>(*lib)),
+    stoneClass(std::make_unique<StoneClass>(*lib)),
 
     o2Level("o2Level", 0.0f),
     h2OLevel("h2OLevel", 0.0f),
@@ -45,9 +46,9 @@ Rend::Rend(Library &lib)
     textShad(std::make_unique<ShaderProgram>("text", "text", proj, mvp, color)),
     uiShad(std::make_unique<ShaderProgram>("ui", "ui", proj, mvp)),
 
-    o2PlantObj(std::make_unique<Obj>(lib, "o2_plant")),
-    h2OPlantObj(std::make_unique<Obj>(lib, "h2o_plant")),
-    treeObj(std::make_unique<Obj>(lib, "tree")),
+    o2PlantObj(std::make_unique<Obj>(*lib, "o2_plant")),
+    h2OPlantObj(std::make_unique<Obj>(*lib, "h2o_plant")),
+    treeObj(std::make_unique<Obj>(*lib, "tree")),
     waterMesh(std::make_unique<ArrayBuffer>(getWaterMesh(), 0)),
     waterShad(std::make_unique<ShaderProgram>("water", "water", mvp, proj, view, h2OLevel, time)),
     planeShad(std::make_unique<ShaderProgram>("plane", "plane", mvp, proj, time))
